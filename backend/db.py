@@ -1,11 +1,13 @@
+import os
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
 # Twoje modele
-from backend.models import Base
+from models import Base
 
-DATABASE_URL = "postgresql+asyncpg://postgres:foka@localhost:5432/twitter"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:foka@localhost:5432/twitter")
+
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = async_sessionmaker(bind=engine, expire_on_commit=False)
 

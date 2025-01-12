@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import users, messages, login  # Import the `login` router
+from routers import users, messages, login  # Import the `login` router
 
 app = FastAPI()
 
-from backend.db import init_db
+from db import init_db
 
 # Configure CORS
 app.add_middleware(

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from ..models import User
-from ..db import get_db
+from models import User
+from db import get_db
 from pydantic import BaseModel
 
 router = APIRouter()  # This router will now handle all login-related endpoints
