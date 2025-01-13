@@ -12,22 +12,36 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+class CreateUserRequest(BaseModel):
+    userName: str
+    password: str
+    phone: str
+    email: str
     
-@router.post("/")
+@router.post("/add")
 async def create_user(
-    userName: str, 
-    password: str, 
-    phone: int, 
-    email: str, 
+    request: CreateUserRequest,  # Korzystamy z modelu Pydantic
     db: AsyncSession = Depends(get_db)
 ):
-   # Usunięcie niecyfrowych znaków
-    clean_phone = ''.join(filter(str.isdigit, phone))
-    
-    new_user = User(userName=userName, password=password, phone=phone, email=email)
-    db.add(new_user)
-    await db.commit()
-    return {"userName": userName, "email": email}
+    try:
+        # Usunięcie niecyfrowych znaków z numeru telefonu
+        clean_phone = ''.join(filter(str.isdigit, request.phone))
+        
+        # Tworzenie użytkownika
+        new_user = User(
+            userName=request.userName,
+            password=request.password,
+            phone=clean_phone,
+            email=request.email
+        )
+        db.add(new_user)
+        await db.commit()
+
+        return {"message": "User created successfully.", "userName": request.userName}
+    except Exception as e:
+        # Rollback na wypadek błędu
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @router.get("/")
 async def get_users(db: AsyncSession = Depends(get_db)):

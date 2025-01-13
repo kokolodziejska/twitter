@@ -10,7 +10,7 @@ class User(Base):
     userId = Column(Integer, primary_key=True, index=True)
     userName = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
-    phone = Column(Integer, nullable=False)
+    phone = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     devices = Column(JSON, nullable=True)
     ip = Column(JSON, nullable=True)
