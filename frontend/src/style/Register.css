@@ -1,0 +1,239 @@
+.reister-container{
+    width: 80vw;
+    height: 80vh; 
+    background-color: white;
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    box-sizing: border-box; 
+}
+
+.signUp-contaner{
+    width: 30vw;
+    height: 80vh; 
+    background-color: white;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column; 
+    position: relative;
+  }
+  
+.back-to-login{
+    margin-bottom: 0.1Ssvh;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-size: 1.5vh ;
+}
+.already{
+    color: black;
+    margin-right: 0.7vh;
+}
+.sign-in{
+    color: #005bbc;
+    margin-right: 2.5vh;
+}
+.title-register{
+    margin-top: 7.5vh;
+    color: #0153a5;
+    margin-bottom: 0;
+    font-size: 5vh;
+    display: flex;
+    justify-content: flex-start;
+    margin-left: 5vw;
+}
+
+.register-panel{
+    
+    display: flex;
+    flex-direction: column; 
+    justify-content: flex-start;
+    align-items: flex-start;
+    height: 80vh; 
+    width: 30vw;
+    margin-left: 2vw;
+}
+.sing-up{
+    color:black;
+    font-size: 2.5vh;
+    text-align: left;
+    margin-bottom: 0.3vh;
+    
+}
+.line{
+    width: 20%; 
+    height: 0.15vh; 
+    background-color: rgba(0, 0, 0, 0.251); 
+    margin: 0 0;
+    margin-bottom: 0.2vh;
+}
+.form{
+    margin: 0 0;
+    display: flex;
+    flex-direction: column; 
+    align-items: flex-start; 
+    width: 80%;
+    padding: 0.7vh;
+    font-size: 1.5vh;
+}
+
+.error-message {
+    color: rgb(255, 138, 4);
+    font-size: 1.1vh;
+    margin-top: 0.2vh;
+    margin-bottom: 0.5vh;
+}
+
+.password{
+    margin-bottom: 0;
+}
+
+label {
+    display: block;
+    margin-top: 2vh;
+  }
+  
+  input {
+    width: 100%;
+    padding: 0.7vh;
+    font-size: 1.3vh;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+.button-singUp{
+  width: 50%;
+  padding: 0.7vh;
+  margin-top: 3vh;
+  background-color: #026cdd;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 1.5vh;
+}
+.picure{
+  width: 50vw;
+  height: 80vh; 
+  background-color: rgb(210, 210, 210);
+}
+
+.blue-picture-register{
+    width: 50vw;
+    height: 80vh; 
+}
+
+.requirements-password{
+    margin-top: 0.5vh; /* Reduce the space above the text */
+    margin-bottom: 0.3vh; /* Optional, if you want spacing below */
+    font-size: 1vh;
+    margin-left: 0.1vh;
+    color: #666;
+}
+
+
+.password-strength-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; 
+    width: 100%; 
+    margin-top: 0.5vh;
+}
+
+.strength-bar-wrapper {
+    width: 100%; 
+    height: 1vh; 
+    background-color: #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-right: 0.5vh; 
+}
+
+.strength-bar {
+    height: 100%;
+    background-color: red;
+    transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+}
+
+.strength-text {
+    font-size: 1.2vh;
+    font-weight: bold;
+    color: #333;
+    margin-left: 1vh; 
+    white-space: nowrap;
+}
+
+.strength-bar.strength-1 {
+    background-color: orange;
+}
+
+.strength-bar.strength-2 {
+    background-color: yellow;
+}
+
+.strength-bar.strength-3 {
+    background-color: lightgreen;
+}
+
+.strength-bar.strength-4 {
+    background-color: green;
+}
+
+.welcome-panel{
+    display: flex;
+    flex-direction: column; 
+    justify-content: flex-start;
+    align-items: center;
+    height: 80vh; 
+    width: 30vw;
+}
+.greating{
+    margin-top: 6vh;
+    display: flex;
+    flex-direction: row; 
+    justify-content: flex-start;
+    align-items: center;
+    
+}
+
+.username-grating{
+    margin-left: 1vh;
+    font-weight: bolder;
+    margin-right: 0.2vh;
+}
+
+.line-welcome{
+    width: 50%; 
+    height: 0.15vh; 
+    background-color: rgba(0, 0, 0, 0.251); 
+    margin: 0 0;
+    margin-bottom: 1vh;
+}
+
+.success-message{
+    margin-top: 2vh;
+    margin-bottom: 0.1vh;
+    font-size: 2vh;
+    color: #0071e2;
+}
+.go-to-log-in{
+    margin-top: 1vh;
+    display: flex;
+    flex-direction: row; 
+    justify-content: flex-start;
+    align-items: center;
+}
+.login-in-message{
+    margin-top: 0.2vh;
+    margin-bottom: 0.1vh;
+    font-size: 1.5vh;
+    color:  rgba(0, 0, 0, 0.555)
+}
+
+.log-in{
+    margin-left: 0.7vh;
+    margin-right: 0.7vh;
+    color:  rgba(0, 0, 0, 0.555);
+    font-weight: bolder;
+}

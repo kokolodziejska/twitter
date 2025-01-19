@@ -1,0 +1,53 @@
+import React, { useEffect, useState } from 'react';
+import API from './components/configurations/api.js';
+import Login from './components/GetInto/Login.js';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import './style/App.css';
+import SignUp from './components/GetInto/SignUp.js';
+import WelcomePage from './components/GetInto/WelcomePage.js';
+import MainPage from './components/GetInto/MainPage.js';
+import ProfilePage from './components/GetInto/ProfilePage.js';
+import NewMessagePage from './components/GetInto/NewMessagePage.js';
+import UserPostsPage from './components/GetInto/UserPostsPage.js';
+
+
+function App() {
+    const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        API.get('/')
+            .then((response) => {
+                setMessage(response.data.message);
+            })
+            .catch((error) => {
+                console.error('Error fetching message:', error);
+            });
+    }, []);
+
+    return (
+        <div>
+            <Router>
+                <div>
+                    
+                    <Routes>
+                    <Route path="/" element={<Navigate to="/login" />}/>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/welcome" element={<WelcomePage />} />
+                    <Route path="/Buzzly" element={<MainPage />} />
+                    <Route path='/profile' element={<ProfilePage/>} />
+                    <Route path='/new-message' element={<NewMessagePage/>} />
+                    <Route path='/your-posts' element={<UserPostsPage/>}/>
+                    </Routes>
+                </div>
+            </Router>
+            <div>
+                <h5>Message from Backend:</h5>
+                <p>{message}</p>
+            </div>
+        </div>
+    );
+}
+
+export default App;
+
