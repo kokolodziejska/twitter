@@ -4,8 +4,15 @@ from sqlalchemy.future import select
 from models import User
 from db import get_db
 from pydantic import BaseModel
+from argon2 import PasswordHasher
+
 
 router = APIRouter()  # Tworzymy router dla użytkowników
+ph = PasswordHasher(
+    time_cost=3,      # Liczba iteracji (czas obliczeń)
+    memory_cost=65536, # Ilość pamięci (w KB)
+    parallelism=4,    # Liczba wątków
+)
 
 # Model danych dla logowania
 class LoginRequest(BaseModel):
@@ -27,10 +34,12 @@ async def create_user(
         # Usunięcie niecyfrowych znaków z numeru telefonu
         clean_phone = ''.join(filter(str.isdigit, request.phone))
         
+        hashed_password = ph.hash(request.password)
+        
         # Tworzenie użytkownika
         new_user = User(
             userName=request.userName,
-            password=request.password,
+            password=hashed_password,
             phone=clean_phone,
             email=request.email
         )
@@ -48,6 +57,25 @@ async def get_users(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User))
     users = result.scalars().all()
     return users
+
+class UserName(BaseModel):
+    userName: str
+
+@router.post("/email")
+async def get_email(data: UserName, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).filter(User.userName == data.userName))
+    user = result.scalars().first()
+    if user:
+        return {"email": user.email}
+    return {"message": "User not found"}
+
+@router.post("/phone")
+async def get_phone(data: UserName, db: AsyncSession = Depends(get_db)):
+     result = await db.execute(select(User).filter(User.userName == data.userName))
+     user = result.scalars().first()
+     if user:
+        return {"email": user.phone}
+     return {"message": "User not found"}
 
 
 # Modele zapytań

@@ -4,7 +4,13 @@ from sqlalchemy.future import select
 from models import User
 from db import get_db
 from pydantic import BaseModel
+from argon2 import PasswordHasher
 
+ph = PasswordHasher(
+    time_cost=3,      # Liczba iteracji (czas obliczeń)
+    memory_cost=65536, # Ilość pamięci (w KB)
+    parallelism=4,    # Liczba wątków
+)
 router = APIRouter()  # This router will now handle all login-related endpoints
 
 # Model for login requests
@@ -22,10 +28,15 @@ async def login_user(data: LoginRequest, db: AsyncSession = Depends(get_db)):
     if not user:
         print("User not found!")
         raise HTTPException(status_code=404, detail="User not found")
-
-    if user.password != data.password:
-        print("Incorrect password!")
+    try:
+        ph.verify(user.password, data.password)  # Hasło podane przez użytkownika
+        print("Password is correct!")
+        return {"message": "Login successful", "userName": user.userName}
+    
+    except Exception:
+        print("Password is incorrect.")
         raise HTTPException(status_code=401, detail="Incorrect password")
+        
+    
 
-    print("Login successful")
-    return {"message": "Login successful", "userName": user.userName}
+    
