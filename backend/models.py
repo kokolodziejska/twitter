@@ -22,9 +22,10 @@ class Message(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     userId = Column(Integer, nullable=False)
-    content = Column(Text, nullable=False)
+    userName = Column(String, unique=True, nullable=False)
+    message = Column(Text, nullable=False)
     image = Column(Text, nullable=True)  # Jeśli dodasz obrazy jako ścieżki plików
-    created_at = Column(DateTime, nullable=False)
+    date = Column(DateTime, nullable=False)
 
 class Log(Base):
     __tablename__ = "logs"

@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -142,6 +143,26 @@ async def check_phone_number_availability(
         return {"available": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+@router.get("/id", response_model=int)
+async def get_user_id(username: str, db: AsyncSession = Depends(get_db)):
+    try:
+        # Zapytanie do bazy danych
+        result = await db.execute(select(User).filter(User.userName == username))
+        user = result.scalars().first()
+
+        # Sprawdzenie, czy użytkownik istnieje
+        if not user:
+            print(f"User not found for username: {username}")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Logowanie znalezionego ID
+        print(f"User found: {user.userId}")
+        return user.userId  # Zwróć userId
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
     
     
 from fastapi import HTTPException
