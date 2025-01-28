@@ -9,6 +9,10 @@ import MainPage from './components/GetInto/MainPage.js';
 import ProfilePage from './components/GetInto/ProfilePage.js';
 import NewMessagePage from './components/GetInto/NewMessagePage.js';
 import UserPostsPage from './components/GetInto/UserPostsPage.js';
+import SeconAuth from './components/GetInto/SecondAuth.js';
+import ChangePassword from './components/GetInto/ChangePassword.js';
+import ChangePasswordemail from './components/GetInto/ChangePasswordemail.js';
+import SeconAuthPassword from './components/GetInto/SecondAuthPassword.js';
 
 
 function App() {
@@ -30,8 +34,13 @@ function App() {
                 <div>
                     
                     <Routes>
+                    
                     <Route path="/" element={<Navigate to="/login" />}/>
                     <Route path="/login" element={<Login />} />
+                    <Route path="/seconauth" element={<SeconAuth />} />
+                    <Route path="/seconauth-password" element={<SeconAuthPassword/>}/>
+                    <Route path="/new-password-email" element={<ChangePasswordemail/>}/>
+                    <Route path='/new-password' element={<ChangePassword/>}/>
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/welcome" element={<WelcomePage />} />
                     <Route path="/Buzzly" element={<MainPage />} />

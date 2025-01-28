@@ -4,6 +4,7 @@ import "../../style/Main.css";
 import profilePicture from "../../assets/profile.png";
 import LeftBar from "./organism/LeftBar";
 import API from "../configurations/api";
+import bacground from "../../assets/1.jpg";
 
 function parseMessage(message) {
     // Escapowanie znaków HTML
@@ -13,11 +14,11 @@ function parseMessage(message) {
 
     // Zamiana znaczników kolorów na klasy CSS
     const coloredMessage = escapedMessage
-    .replace(/\[red\](.*?)\[\/red\]/g, '<span class="text-red">$1</span>')
-    .replace(/\[green\](.*?)\[\/green\]/g, '<span class="text-green">$1</span>')
-    .replace(/\[blue\](.*?)\[\/blue\]/g, '<span class="text-blue">$1</span>')
-    .replace(/\[orange\](.*?)\[\/orange\]/g, '<span class="text-orange">$1</span>') 
-    .replace(/\[purple\](.*?)\[\/purple\]/g, '<span class="text-purple">$1</span>'); 
+        .replace(/\[red\](.*?)\[\/red\]/g, '<span class="text-red">$1</span>')
+        .replace(/\[green\](.*?)\[\/green\]/g, '<span class="text-green">$1</span>')
+        .replace(/\[blue\](.*?)\[\/blue\]/g, '<span class="text-blue">$1</span>')
+        .replace(/\[orange\](.*?)\[\/orange\]/g, '<span class="text-orange">$1</span>')
+        .replace(/\[purple\](.*?)\[\/purple\]/g, '<span class="text-purple">$1</span>');
 
 
     // Obsługa list punktowanych i numerowanych
@@ -79,6 +80,18 @@ function MainPage() {
         return () => clearInterval(interval);
     }, []);
 
+
+    const toggleSignature = (id, isHovered) => {
+        setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+                msg.id === id && msg.signature
+                    ? { ...msg, showFullSignature: isHovered }
+                    : msg
+            )
+        );
+    };
+    
+
     return (
         <div className="main">
             <LeftBar
@@ -87,18 +100,23 @@ function MainPage() {
                 currentPage={"/Buzzly"}
                 handleNavigation={handleNavigation}
             />
-            <div className="content-container">
+            <div className="content-container" style={{
+                backgroundImage: `url(${bacground})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center"
+            }}>
                 <div className="messages-container">
                     {messages.map((msg) => (
                         <div className="message-bubble" key={msg.id}>
                             <div className="message-header">
-                                <strong>{msg.userName}</strong>
+                                <strong className="message-username">{msg.userName}</strong>
                                 <span className="message-date">
                                     {new Date(msg.date).toLocaleString()}
                                 </span>
                             </div>
-                            {/* Renderowanie wiadomości z kolorami */}
+
                             <div
+                                className="message"
                                 dangerouslySetInnerHTML={{
                                     __html: parseMessage(msg.message),
                                 }}
@@ -110,6 +128,24 @@ function MainPage() {
                                     className="message-image"
                                 />
                             )}
+                            <p
+                                className="message-signature-wrapper"
+                                onMouseEnter={() => msg.signature && toggleSignature(msg.id, true)}
+                                onMouseLeave={() => msg.signature && toggleSignature(msg.id, false)}
+                            >
+                                
+                                {msg.signature ? (
+                                    msg.showFullSignature ? (<>
+                                        <span className="signature-collapsed">Signature: </span>
+                                        <span className="signature-expanded">{msg.signature}</span></>
+                                    ) : (
+                                        
+                                        <span className="signature-collapsed">Signature: {msg.signature}</span>
+                                    )
+                                ) : (
+                                    <span className="no-signature">No signature</span>
+                                )}
+                            </p>
                         </div>
                     ))}
                 </div>

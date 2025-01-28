@@ -2,7 +2,7 @@ import blueImage from "../../assets/blue.jpg";
 import API from "../configurations/api";
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import LeftBar from "./organism/LeftBar";
+
 
 function Login() {
 
@@ -14,12 +14,14 @@ function Login() {
     const [formData, setFormData] = useState({
         userName: "", 
         password: "",
+        
     });
 
     // Stan błędów walidacji
     const [errors, setErrors] = useState({
         userName: null,
         password: null,
+        global: null, 
     });
 
     useEffect(() => {
@@ -79,11 +81,14 @@ function Login() {
             });
             console.log(response.data);
 
+            // Zapisywanie tempToken w sessionStorage
+            sessionStorage.setItem("tempToken", response.data.tempToken);
+
             setErrors((prevErrors) => ({
                 ...prevErrors,
                 password: null, 
             }));
-            navigate("/Buzzly", { state: { userName: formData.userName } });
+            navigate("/seconauth", { state: { userName: formData.userName } });
             console.log("Login successful!");
         } catch (error) {
             console.error(error.response?.data || "An error occurred");
@@ -98,6 +103,12 @@ function Login() {
                 setErrors((prevErrors) => ({
                     ...prevErrors,
                     password: error.response.data.detail, // "Incorrect password"
+                }));
+            }else if (error.response?.status === 403) {
+                    // Obsługa blokady konta
+                    setErrors((prevErrors) => ({
+                        ...prevErrors,
+                        global: error.response.data.detail, // "Account is locked. Try again later."
                 }));
             } else {
                 // Inny błąd
@@ -146,14 +157,16 @@ function Login() {
                         <button className="button-login" type="submit">
                             Log in
                         </button>
+                        {errors.global && <p className="error-message-red error-message-red-2">{errors.global}</p>}
                     </form>
-                    <a href="#" className="forgot-password">
-                        Forgot your password?
-                    </a>
+                    <Link to="/new-password-email" className="forgot-password">
+                    Forgot your password?
+                    </Link>
                     <p className="dont-have">Don't have an account?</p>
                     <Link to="/signup" className="link-singup">
                         Sign up
                     </Link>
+                    
                 </div>
             </div>
             <div className="login-right">

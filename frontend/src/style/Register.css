@@ -237,3 +237,14 @@ label {
     color:  rgba(0, 0, 0, 0.555);
     font-weight: bolder;
 }
+
+.qr-code{
+    width: 23vh;
+    height: 23vh;
+}
+
+.change-password-text{
+    margin-top: 0.1vh;
+    font-size: 2vh;
+    margin-left: 1vw;
+}

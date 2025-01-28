@@ -13,6 +13,8 @@ function NewMessagePage() {
     const usernameFromState = location.state?.userName || "";
 
     const [successMessage, setSuccessMessage] = useState("");
+    const [doSign, setDoSign] = useState(false);
+
 
     const [formData, setFormData] = useState({
         message: "",
@@ -49,32 +51,62 @@ function NewMessagePage() {
         }));
     };
 
-
+    // Obsługa podpisu
+    const handleGenerateSignature = () => {
+        setDoSign(!doSign);
+    };
 
 
 
 
     // Obsługa załączania zdjęcia
     const handleImageUpload = (e) => {
-        const file = e.target.files[0]; // Pobieramy pierwszy plik
-        if (file) {
-            const reader = new FileReader(); // Tworzymy instancję FileReader
-            reader.onload = () => {
-                setFormData((prevData) => ({
-                    ...prevData,
-                    picture: reader.result.split(",")[1], // Base64 bez prefixu "data:image/*;base64,"
-                }));
-            };
-            reader.onerror = (error) => {
-                console.error("Error reading file:", error);
-                setErrors((prevErrors) => ({
-                    ...prevErrors,
-                    picture: "Error reading file.",
-                }));
-            };
-            reader.readAsDataURL(file); // Konwertujemy plik na Base64
+        const file = e.target.files?.[0];
+        if (!file) {
+            setFormData((prevData) => ({
+                ...prevData,
+                picture: null,
+            }));
+            setErrors((prevErrors) => ({
+                ...prevErrors,
+                picture: null,
+            }));
+            return;
         }
+
+        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+            setErrors((prevErrors) => ({
+                ...prevErrors,
+                picture: "Only JPEG and PNG images are allowed.",
+            }));
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            setErrors((prevErrors) => ({
+                ...prevErrors,
+                picture: "File size exceeds the 5MB limit.",
+            }));
+            return;
+        }
+
+        const reader = new FileReader(); // Brakowało zakończenia poprzednich bloków
+        reader.onload = () => {
+            setFormData((prevData) => ({
+                ...prevData,
+                picture: reader.result.split(",")[1], // Base64 bez prefixu
+            }));
+        };
+        reader.onerror = (error) => {
+            console.error("Error reading file:", error);
+            setErrors((prevErrors) => ({
+                ...prevErrors,
+                picture: "Error reading file.",
+            }));
+        };
+        reader.readAsDataURL(file);
     };
+
 
     const handleNavigation = (path) => {
         navigate(path, { state: { userName: usernameFromState } });
@@ -82,51 +114,61 @@ function NewMessagePage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
+        // Walidacja wiadomości
         const isMessageValid = validateMessage();
-
-        if (isMessageValid) {
-            try {
-                console.log("Username being sent to API:", usernameFromState);
-
-                // Pobranie userId na podstawie nazwy użytkownika
-                const userIdResponse = await API.get("/users/id", {
-                    params: { username: usernameFromState },
-                });
-                const userId = userIdResponse.data;
-
-                if (!userId) {
-                    console.error("User ID not found for the given username.");
-                    return;
-                }
-
-                // Wysłanie wiadomości do API
-                const messageResponse = await API.post("/messages/add", {
-                    userId: userId,
-                    userName: usernameFromState,
-                    message: formData.message,
-                    image: formData.picture, // Base64 obrazu
-                });
-
-                setFormData({
-                    message: "",
-                    picture: "",
-                });
-
-                // Wyświetlenie komunikatu o sukcesie
-                setSuccessMessage("Post has been successfully sent!");
-                setTimeout(() => {
-                    setSuccessMessage(""); // Ukryj komunikat po 5 sekundach
-                }, 5000);
-            } catch (error) {
-                console.error("Error occurred:", error.response?.data || error.message);
-
-                if (error.response) {
-                    console.error("Server response:", error.response);
-                }
+        if (!isMessageValid) {
+            console.warn("Message validation failed.");
+            return;
+        }
+    
+        try {
+            console.log("Username being sent to API:", usernameFromState);
+    
+            // Pobranie userId na podstawie nazwy użytkownika
+            const userIdResponse = await API.get("/users/id", {
+                params: { username: usernameFromState },
+            });
+            const userId = userIdResponse.data;
+    
+            if (!userId) {
+                console.error("User ID not found for the given username.");
+                return;
+            }
+    
+            // Tworzenie payloadu
+            const payload = {
+                userId: userId,
+                userName: usernameFromState,
+                message: formData.message,
+                image: formData.picture || null, // Jeśli brak pliku, ustawiamy null
+                doSign: doSign,
+            };
+    
+            console.log("Payload being sent to API:", payload);
+    
+            // Wysłanie wiadomości do API
+            const messageResponse = await API.post("/messages/add", payload);
+            console.log("Response from API:", messageResponse.data);
+    
+            // Reset formularza po sukcesie
+            setFormData({
+                message: "",
+                picture: "",
+            });
+    
+            setSuccessMessage("Post has been successfully sent!");
+            setTimeout(() => setSuccessMessage(""), 5000); // Komunikat znika po 5 sekundach
+        } catch (error) {
+            console.error("Error occurred:", error.response?.data || error.message);
+    
+            if (error.response) {
+                console.error("Server response:", error.response);
             }
         }
     };
+    
+
 
     return (
         <div className="main">
@@ -183,6 +225,7 @@ function NewMessagePage() {
                                     className="form-button  new-message-generate-signiature"
                                     type="button"
                                     id="generate-signature"
+                                    onClick={handleGenerateSignature}
                                 >
                                     Generate Signature
                                 </button>
@@ -255,7 +298,7 @@ function NewMessagePage() {
                                     </div>
 
 
-                                    
+
                                     <div className="text-styling ">
                                         <p className="section">Colors</p>
 
@@ -282,13 +325,13 @@ function NewMessagePage() {
                                             <p className="arrow">→ </p>
                                             <p className="markdown-blue-result">Blue text</p>
                                         </div>
-                                        
+
                                         <div className="instruction instruction-color">
                                             <p>[purple]Purple text[/purple]</p>
                                             <p className="arrow">→ </p>
                                             <p className="markdown-purple-result">Purple text</p>
                                         </div>
-                                        
+
                                     </div>
 
                                 </div>

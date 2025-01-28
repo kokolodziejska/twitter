@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -16,16 +16,23 @@ class User(Base):
     ip = Column(JSON, nullable=True)
     failedAttempts = Column(Integer, default=0)
     last = Column(DateTime, nullable=True)
+    privKey = Column(Text, nullable=True)  
+    pubKey = Column(Text, nullable=True)
+    profilePicture = Column(Text, nullable=True)
+    totpSecret = Column(String, nullable=True)
+    isTotpEnabled = Column(Boolean, default=False)  # Czy TOTP jest włączone
+    tempSessionId = Column(Text,  nullable=True) 
 
 class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
     userId = Column(Integer, nullable=False)
-    userName = Column(String, unique=True, nullable=False)
+    userName = Column(String, nullable=False)
     message = Column(Text, nullable=False)
-    image = Column(Text, nullable=True)  # Jeśli dodasz obrazy jako ścieżki plików
+    image = Column(Text, nullable=True)  
     date = Column(DateTime, nullable=False)
+    signature = Column (Text, nullable=True)
 
 class Log(Base):
     __tablename__ = "logs"

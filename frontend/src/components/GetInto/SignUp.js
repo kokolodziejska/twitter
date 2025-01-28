@@ -175,17 +175,17 @@ function SignUp(){
     
         // Warunki walidacji
         const minLength = 8;
-        const maxLength = 30;
+        
         const hasUpperCase = /[A-Z]/.test(password); // Co najmniej jedna wielka litera
         const hasLowerCase = /[a-z]/.test(password); // Co najmniej jedna mała litera
         const hasNumber = /[0-9]/.test(password);    // Co najmniej jedna cyfra
         const hasSpecialChar = /[@#$%^&*(),.?":{}|<>!]/.test(password); // Co najmniej jeden znak specjalny
     
         // Sprawdzenie długości
-        if (password.length < minLength || password.length > maxLength) {
+        if (password.length < minLength ) {
             setErrors((prevErrors) => ({
                 ...prevErrors,
-                password: `Password must be between ${minLength} and ${maxLength} characters.`,
+                password: `"Password must be at least ${minLength} characters long.`,
             }));
             return false;
         }
