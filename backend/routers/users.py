@@ -13,7 +13,9 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import Optional
 import base64
-from fastapi import Request
+from fastapi import Request, Response
+import uuid
+from fastapi.responses import StreamingResponse
 
 
 
@@ -177,6 +179,180 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
         "message": "User authenticated successfully"
     }
 
+
+@router.get("/email-me")
+async def get_email(request: Request, db: AsyncSession = Depends(get_db)):
+    
+    session_id = request.cookies.get("sessionId")
+
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    result = await db.execute(select(User).where(User.tempSessionId == session_id))
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user:
+        return {"email": user.email}
+    return {"message": "User not found"}
+
+@router.get("/phone-me")
+async def get_phone(request: Request, db: AsyncSession = Depends(get_db)):
+    
+    session_id = request.cookies.get("sessionId")
+
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    result = await db.execute(select(User).where(User.tempSessionId == session_id))
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user:
+        return {"phone": user.phone}
+    
+    return {"message": "User not found"}
+ 
+@router.get("/pubKey-me")
+async def get_public_key(request: Request, db: AsyncSession = Depends(get_db)):
+   
+    session_id = request.cookies.get("sessionId")
+
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    result = await db.execute(select(User).where(User.tempSessionId == session_id))
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user and user.pubKey:
+        public_key = load_public_key(user.pubKey)
+        return {"publicKey": user.pubKey}
+
+    return {"message": "User not found or no public key available"}
+
+class UsernameCheckRequest(BaseModel):
+    username: str
+    
+# Sprawdzanie dostępności nazwy użytkownika
+@router.post("/check-username")
+async def check_username_availability(
+    request: UsernameCheckRequest, 
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        username = request.username
+        result = await db.execute(select(User).filter(User.userName == username))
+        user = result.scalar()     
+        
+        if user:
+            return {"available": False}
+        
+        return {"available": True}
+    
+    except Exception as e:
+    
+        raise HTTPException(status_code=500, detail="Database connection error")
+
+class CheckEmailForUserRequest(BaseModel):
+    userName: str
+    email: str
+    
+@router.post("/check-email-for-user")
+async def check_email_for_user(
+    email_data: CheckEmailForUserRequest,  
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        result = await db.execute(select(User).where(User.userName == email_data.userName))
+        user = result.scalar_one_or_none()
+
+        if not user:
+            return {"emailMatches": False, "message": "User not found"}
+
+        if user.email == email_data.email:
+            
+            sessionId = str(uuid.uuid4())
+            user.tempSessionId = sessionId
+            await db.commit()
+
+            response.set_cookie("sessionId", sessionId, httponly=True, secure=True, samesite="None")
+            return {"emailMatches": True}
+
+        return {"emailMatches": False}
+
+    except Exception as e:
+        await db.rollback()  # Cofnięcie zmian w razie błędu
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+class ChangePasswordRequest(BaseModel):
+    newPassword: str
+
+@router.post("/change-password")
+async def change_password(
+    password_data: ChangePasswordRequest, 
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        session_id = request.cookies.get("sessionId")
+
+        if not session_id:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        result = await db.execute(select(User).where(User.tempSessionId == session_id))
+        user = result.scalars().first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        hashed_password = ph.hash(password_data.newPassword)
+
+        user.password = hashed_password
+        db.add(user)
+        
+        newsessionId = str(uuid.uuid4())
+        user.tempSessionId = newsessionId
+        await db.commit()
+        
+        response.set_cookie(
+            key="sessionId",
+            value=newsessionId,
+            httponly=True,
+            secure=True,
+            samesite="None"
+        )
+
+        return {"message": "Password changed successfully."}
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+from fastapi import HTTPException
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @router.get("/")
 async def get_users(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User))
@@ -224,8 +400,7 @@ async def get_public_key(data: UserName, db: AsyncSession = Depends(get_db)):
 
 
 
-class UsernameCheckRequest(BaseModel):
-    username: str
+
 
 class EmailCheckRequest(BaseModel):
     email: str
@@ -235,49 +410,6 @@ class PhoneNumberCheckRequest(BaseModel):
 
 
 
-# Sprawdzanie dostępności nazwy użytkownika
-@router.post("/check-username")
-async def check_username_availability(
-    request: UsernameCheckRequest, 
-    db: AsyncSession = Depends(get_db)
-):
-    try:
-        username = request.username
-        result = await db.execute(select(User).filter(User.userName == username))
-        user = result.scalar()     
-        
-        if user:
-            return {"available": False}
-        
-        return {"available": True}
-    
-    except Exception as e:
-    
-        raise HTTPException(status_code=500, detail="Database connection error")
-
-class CheckEmailForUserRequest(BaseModel):
-    userName: str
-    email: str
-    
-@router.post("/check-email-for-user")
-async def check_email_for_user(
-    request: CheckEmailForUserRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    try:
-        result = await db.execute(select(User).filter(User.userName == request.userName))
-        user = result.scalar_one_or_none()
-
-        if user:
-            if user.email == request.email:
-                return {"emailMatches": True}
-            else:
-                return {"emailMatches": False}
-
-        return {"message": "User not found"}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 # Sprawdzanie dostępności e-maila
 @router.post("/check-email")
@@ -328,34 +460,6 @@ async def get_user_id(username: str, db: AsyncSession = Depends(get_db)):
 
 
 
-class ChangePasswordRequest(BaseModel):
-    userName: str
-    newPassword: str
 
-@router.post("/change-password")
-async def change_password(
-    request: ChangePasswordRequest, 
-    db: AsyncSession = Depends(get_db)
-):
-    try:
-        result = await db.execute(select(User).filter(User.userName == request.userName))
-        user = result.scalars().first()
-
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found.")
-
-        hashed_password = ph.hash(request.newPassword)
-
-        user.password = hashed_password
-        db.add(user)
-        await db.commit()
-
-        return {"message": "Password changed successfully."}
-
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-    
-from fastapi import HTTPException
 
 

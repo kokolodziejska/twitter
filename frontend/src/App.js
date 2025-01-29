@@ -14,6 +14,7 @@ import ChangePassword from './components/GetInto/ChangePassword.js';
 import ChangePasswordemail from './components/GetInto/ChangePasswordemail.js';
 import SeconAuthPassword from './components/GetInto/SecondAuthPassword.js';
 import ChangePasswordMain from './components/GetInto/ChangePasswordToMain.js';
+import OtherProfilePage from './components/GetInto/OtherProfilePage.js';
 
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
                     <Route path='/profile' element={<ProfilePage/>} />
                     <Route path='/new-message' element={<NewMessagePage/>} />
                     <Route path='/your-posts' element={<UserPostsPage/>}/>
+                    <Route path='/profile-other' element={<OtherProfilePage/>}/>
                     </Routes>
                 </div>
             </Router>

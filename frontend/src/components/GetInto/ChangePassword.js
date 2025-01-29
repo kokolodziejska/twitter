@@ -9,7 +9,6 @@ import zxcvbn from "zxcvbn";
 function ChangePassword(){
 
     const location = useLocation();
-    const usernameFromState = location.state?.userName || "";
     const [passwordStrength, setPasswordStrength] = useState(0);
     const navigate = useNavigate();
 
@@ -115,12 +114,11 @@ function ChangePassword(){
         if (isPasswordValid && isRepeatPasswordValid) {
             try {
                 const response = await API.post("/users/change-password", {
-                    userName: usernameFromState, 
                     newPassword: formData.password, 
                 });
     
                 if (response.status === 200) {
-                    navigate("/login", { state: { userName: usernameFromState } });
+                    navigate("/login");
                 }
             } catch (error) {
                 console.error("Error changing password:", error);
@@ -163,7 +161,7 @@ function ChangePassword(){
         
         <h1 className="title">Buzzly</h1>
             <div className="register-panel">
-                <p className="change-password-text">{usernameFromState} you can change your password!</p>
+                <p className="change-password-text">You can change your password!</p>
                 
                 <form className="form" onSubmit={handleSubmit}>
                      <label>Password</label>

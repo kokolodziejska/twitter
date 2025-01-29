@@ -8,9 +8,6 @@ function SeconAuthPassword() {
     const location = useLocation();
     const navigate = useNavigate();
 
-
-
-    const usernameFromState = location.state?.userName || "";
     const doMain = location.state?.doMain || "";
     const numFromState = location.state?.num || ""; 
 
@@ -20,19 +17,26 @@ function SeconAuthPassword() {
     const [attempts, setAttempts] = useState(0); // Licznik nieudanych prób
 
     const handleNavigation = (path) => {
-        navigate(path, { state: { userName: usernameFromState } });
+        navigate(path);
     };
 
-
     const isMailCodeValid = () => {
-        if (mailCode === numFromState.toString()) {
+        if (!mailCode) {
+            setError("Mail code is required.");
+            return false;
+        }
+        console.log(numFromState)
+        console.log(mailCode)
+    
+        const newAttempts = attempts + 1;
+    
+        if (parseInt(mailCode, 10) === parseInt(numFromState, 10)) {  
             return true;
         } else {
-            setAttempts((prev) => prev + 1); 
+            setAttempts(newAttempts);
             setError("Invalid mail code. Please check your email.");
-
-            // Przekierowanie na stronę logowania po 5 nieudanych próbach
-            if (attempts + 1 >= 5) {
+    
+            if (newAttempts >= 5) {
                 navigate("/login");
             }
             return false;
@@ -44,18 +48,13 @@ function SeconAuthPassword() {
         if (!isMailCodeValid()) {
             return; 
         }
-
-        try {
-
-            
+        try { 
             const response = await API.post("/login/verify-totp", null, {
-                params: {
-                    userName: usernameFromState,  
+                params: { 
                     code: parseInt(totpCode)    
                 }
             });
 
-            const { accessToken } = response.data;
             if(doMain){
                 
                 handleNavigation("/new-password-user")
@@ -63,7 +62,7 @@ function SeconAuthPassword() {
             else{
                 handleNavigation("/new-password")
             }
-            
+
         } catch (err) {
             setError("Invalid TOTP code. Please try again.");
             console.error("Error during TOTP verification:", err);
@@ -78,17 +77,17 @@ function SeconAuthPassword() {
                     <h2 className="login-text">Second Authentication</h2>
 
                     <div className="form-login">
-                        {/* Pole do wprowadzania kodu z maila */}
+                        
                         <label htmlFor="mailCode">Enter your code from Mail:</label>
                         <input
                             type="number"
                             id="mailCode"
                             value={mailCode}
-                            onChange={(e) => setMailCode(e.target.value)} // Obsługa mailCode
+                            onChange={(e) => setMailCode(e.target.value)} 
                             placeholder="6-digit code"
                         />
 
-                        {/* Pole do wprowadzania kodu TOTP */}
+                       
                         <label htmlFor="totpCode">Enter your TOTP code:</label>
                         <input
                             type="number"
@@ -98,7 +97,6 @@ function SeconAuthPassword() {
                             placeholder="6-digit code"
                         />
 
-                        {/* Przycisk do weryfikacji */}
                         <button onClick={handleVerifyTotp} className="button-login">
                             Verify
                         </button>

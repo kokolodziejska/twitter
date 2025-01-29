@@ -10,6 +10,7 @@ function generateSixDigitNumber() {
     return Math.floor(100000 + Math.random() * 900000);
 }
 
+
 function formatPublicKey(publicKey) {
 
     return publicKey
@@ -18,47 +19,43 @@ function formatPublicKey(publicKey) {
         .trim();
 }
 
-function ProfilePage() {
+function OtherProfilePage() {
     const location = useLocation();
     const navigate = useNavigate();
+    const usernameFromState = location.state?.userName || "";
 
-    const [userName, setUserName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [pubKey, setpubKey] = useState("");
+    const [profilePic, setProfilePic] = useState(profilePicture);
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const userNameResponse = await API.get("/users/me");
-                setUserName(userNameResponse.data.userName || "No username available"); 
-    
-                const phoneResponse = await API.get("/users/phone-me");  
+                console.log("Fetching data for username:", usernameFromState);
+
+                const phoneResponse = await API.post("/users/phone", { userName: usernameFromState });
                 setPhone(phoneResponse.data.phone || "No phone available"); 
-    
-                const emailResponse = await API.get("/users/email-me");  
+
+                const emailResponse = await API.post("/users/email", { userName: usernameFromState });
                 setEmail(emailResponse.data.email || "No email available");
-    
-                const pubKeyResponse = await API.get("/users/pubKey-me");  
+
+                const pubKeyResponse = await API.post("/users/pubKey", { userName: usernameFromState });
                 const formattedKey = formatPublicKey(pubKeyResponse.data.publicKey || "No publicKey available");
                 setpubKey(formattedKey);
-    
+
             } catch (error) {
                 console.error("Error fetching user data:", error);
             }
         }
+
         fetchData();
     }, []);
 
     const handleNavigation = (path) => {
         navigate(path);
     };
-    const handleNavigationPassword = (path) => {
-        const num = generateSixDigitNumber()
-        console.log({ email }, "-> Your code:", { num })
-        const doMain = true
-        navigate(path, { state: { userName: userName, num: num, doMain: doMain } });
-    };
+   
 
     return (
         <div className="main">
@@ -95,34 +92,30 @@ function ProfilePage() {
                                         borderRadius: "50%",
                                     }}
                                 ></div>
-                                <p className="user-name-big">{userName}</p>
+                                <p className="user-name-big">{usernameFromState}</p>
                             </div>
                             <div className="user-informations">
                                 <div className="personal-data-container">
-                                    <p>Your email: </p>
+                                    <p>Email: </p>
                                     <p className="personal-data">{email}</p>
                                 </div>
 
                                 <div className="personal-data-container">
-                                    <p> Your phone number: </p>
+                                    <p> Phone number: </p>
                                     <p className="personal-data" >{phone}</p>
                                 </div>
 
                                 <div className="decsription-container">
-                                    <p className="profile-description-etyqiet">Your profile description:</p>
+                                    <p className="profile-description-etyqiet">Profile description:</p>
                                     <p className="profile-description-box"> ....... </p>
                                 </div>
                             </div>
                             <div className="profile-edit-buttons">
-
-                                <button className="profile-edit-button">Change profile picture</button>
-                                <button className="profile-edit-button" onClick={() => handleNavigationPassword("/seconauth-password")}>Change password</button>
                             </div>
                             <div className="pub-key-container">
                                 <p className="pub-key">Public key: {pubKey}</p>
                             </div>
-                            <div className="profile-number-of-post-container">
-                                <button className="profile-number-of-post-button" onClick={() => handleNavigation("/your-posts")}>Go to your posts</button>
+                             <div className="profile-number-of-post-container">
                             </div>
                         </div>
                     </div>
@@ -132,4 +125,4 @@ function ProfilePage() {
     );
 }
 
-export default ProfilePage;
+export default OtherProfilePage;

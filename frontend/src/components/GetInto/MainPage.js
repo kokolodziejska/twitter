@@ -60,6 +60,7 @@ function MainPage() {
     const handleNavigation = (path) => {
         navigate(path);
     };
+  
 
     useEffect(() => {
         const fetchMessages = async () => {
@@ -103,7 +104,7 @@ function MainPage() {
                     {messages.map((msg) => (
                         <div className="message-bubble" key={msg.id}>
                             <div className="message-header">
-                                <strong className="message-username">{msg.userName}</strong>
+                                <button className="message-username" onClick={() =>  navigate("/profile-other", { state: { userName: msg.userName} })}>{msg.userName}</button>
                                 <span className="message-date">
                                     {new Date(msg.date).toLocaleString()}
                                 </span>

@@ -10,11 +10,9 @@ import ReactMarkdown from "react-markdown";
 function NewMessagePage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const usernameFromState = location.state?.userName || "";
 
     const [successMessage, setSuccessMessage] = useState("");
     const [doSign, setDoSign] = useState(false);
-
 
     const [formData, setFormData] = useState({
         message: "",

@@ -100,7 +100,7 @@ function ChangePasswordemail() {
             const num = generateSixDigitNumber()
             console.log({email}, "-> Your code:", {num})
 
-            navigate("/seconauth-password", { state: { userName: formData.userName, num: num } });
+            navigate("/seconauth-password", { state: { num: num } });
            
         }
     };

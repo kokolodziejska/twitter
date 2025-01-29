@@ -57,12 +57,11 @@ function parseMessage(message) {
 function UserPostPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const usernameFromState = location.state?.userName || "";
 
     const [messages, setMessages] = useState([]);
 
     const handleNavigation = (path) => {
-        navigate(path, { state: { userName: usernameFromState } });
+        navigate(path, );
     };
 
     useEffect(() => {
@@ -78,7 +77,7 @@ function UserPostPage() {
         fetchMessages();
         const interval = setInterval(fetchMessages, 30000);
         return () => clearInterval(interval);
-    }, [usernameFromState]); 
+    }, []); 
     
 
 
