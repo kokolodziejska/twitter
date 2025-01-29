@@ -6,7 +6,9 @@ import profilePicture from "../../assets/profile.png";
 import LeftBar from "./organism/LeftBar";
 import API from "../configurations/api";
 
-
+function generateSixDigitNumber() {
+    return Math.floor(100000 + Math.random() * 900000);
+}
 
 
 function formatPublicKey(publicKey) {
@@ -25,6 +27,7 @@ function ProfilePage() {
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [pubKey, setpubKey] = useState("");
+    const [profilePic, setProfilePic] = useState(profilePicture);
 
     useEffect(() => {
         async function fetchData() {
@@ -33,7 +36,7 @@ function ProfilePage() {
 
                 const phoneResponse = await API.post("/users/phone", { userName: usernameFromState });
                 console.log("Phone API response:", phoneResponse.data);
-                setPhone(phoneResponse.data.phone || "No phone available"); // Użyj właściwego klucza
+                setPhone(phoneResponse.data.phone || "No phone available"); 
 
                 const emailResponse = await API.post("/users/email", { userName: usernameFromState });
                 console.log("Email API response:", emailResponse.data);
@@ -52,20 +55,27 @@ function ProfilePage() {
         fetchData();
     }, []);
 
+    
+
+
+
+
 
     const handleNavigation = (path) => {
         navigate(path, { state: { userName: usernameFromState } });
     };
     const handleNavigationPassword = (path) => {
-        
-        navigate(path, { state: { userName: usernameFromState} });
+        const num = generateSixDigitNumber()
+        console.log({ email }, "-> Your code:", { num })
+        const doMain = true
+
+        navigate(path, { state: { userName: usernameFromState, num: num, doMain: doMain } });
     };
 
     return (
         <div className="main">
             <LeftBar
                 profilePicture={profilePicture}
-                username={usernameFromState}
                 currentPage={"/profile"}
                 handleNavigation={handleNavigation}
             />
@@ -117,9 +127,8 @@ function ProfilePage() {
                             </div>
                             <div className="profile-edit-buttons">
 
-                                <button className="profile-edit-button">Edit your description</button>
                                 <button className="profile-edit-button">Change profile picture</button>
-                                <button className="profile-edit-button" onClick={() => handleNavigationPassword("/new-password")}>Change password</button>
+                                <button className="profile-edit-button" onClick={() => handleNavigationPassword("/seconauth-password")}>Change password</button>
                             </div>
                             <div className="pub-key-container">
                                 <p className="pub-key">Public key: {pubKey}</p>

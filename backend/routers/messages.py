@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from models import Message
@@ -10,6 +10,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from sqlalchemy import select
 from models import User
+from pydantic import BaseModel
+
 
 
 async def get_private_key_for_user(user_id: int, db: AsyncSession) -> str:
@@ -24,7 +26,7 @@ def generate_signature(private_key: str, message: str) -> str:
     try:
         private_key_obj = serialization.load_pem_private_key(
             private_key.encode(),
-            password=b"DawnoDawnotemuWOdleglejGalaktyce"
+            password=b"DawnoDawnotemuWOdleglejGalaktyce"  
         )
         signature = private_key_obj.sign(
             message.encode(),
@@ -43,9 +45,8 @@ def generate_signature(private_key: str, message: str) -> str:
         raise HTTPException(status_code=500, detail=f"Failed to generate signature: {str(e)}")
 
 
-router = APIRouter()  # Router dla wiadomości
+router = APIRouter()  
 
-# Model danych dla wiadomości
 class CreateMessageRequest(BaseModel):
     userId: int
     userName: str
@@ -63,9 +64,6 @@ class MessageResponse(BaseModel):
     signature: str | None
 
   
-
-
-# Endpoint do tworzenia nowej wiadomości
 @router.post("/add", response_model=MessageResponse)
 async def create_message(
     request: CreateMessageRequest,
@@ -106,7 +104,7 @@ from sqlalchemy.orm import aliased
 @router.get("/", response_model=list[MessageResponse])
 async def get_all_messages(db: AsyncSession = Depends(get_db)):
     try:
-        # Pobieranie wiadomości z sortowaniem według daty malejąco
+       
         query = (
             select(
                 Message.id,
@@ -123,7 +121,7 @@ async def get_all_messages(db: AsyncSession = Depends(get_db)):
         result = await db.execute(query)
         messages = result.fetchall()
 
-        # Formatowanie danych w odpowiedniej strukturze
+     
         response = [
             {
                 "id": msg.id,
@@ -163,13 +161,13 @@ async def get_user_messages(
                 Message.userName,
                 Message.signature,
             )
-            .where(Message.userId == request.userId)  # Filtr dla konkretnego użytkownika
+            .where(Message.userId == request.userId)  
             .order_by(Message.date.desc())           # Sortowanie według daty malejąco
         )
         result = await db.execute(query)
         messages = result.fetchall()
 
-        # Formatowanie danych w odpowiedniej strukturze
+      
         response = [
             {
                 "id": msg.id,
@@ -187,6 +185,9 @@ async def get_user_messages(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+    
+
 
 
 

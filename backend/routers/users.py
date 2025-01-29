@@ -8,8 +8,70 @@ from argon2 import PasswordHasher
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 import os
-
+import re
 from dotenv import load_dotenv
+from pydantic import BaseModel
+from typing import Optional
+import base64
+from fastapi import Request
+
+
+
+def validate_phone(phone: str):
+    clean_phone = re.sub(r"[^\d]", "", phone)  
+    if not 9 <= len(clean_phone) <= 15:
+        raise HTTPException(
+            status_code=400,
+            detail="Phone number must be between 9 and 15 digits."
+        )
+    return clean_phone
+
+def validate_password(password: str):
+    if len(password) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 8 characters long."
+        )
+    if not any(char.islower() for char in password):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must contain at least one lowercase letter."
+        )
+    if not any(char.isupper() for char in password):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must contain at least one uppercase letter."
+        )
+    if not any(char.isdigit() for char in password):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must contain at least one digit."
+        )
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must contain at least one special character."
+        )
+    return password
+
+
+def validate_username(username: str):
+    if not 3 <= len(username) <= 30:
+        raise HTTPException(
+            status_code=400,
+            detail="Username must be between 3 and 30 characters."
+        )
+    return username
+
+
+def validate_email_format(email: str):
+    email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"  
+    if not re.match(email_regex, email):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid email format."
+        )
+    return email
 
 
 
@@ -22,17 +84,16 @@ def load_public_key(pem_key: str):
     except Exception as e:
         raise ValueError(f"Failed to load public key: {str(e)}")
 
-router = APIRouter()  # Tworzymy router dla użytkowników
+router = APIRouter()  
 ph = PasswordHasher(
     time_cost=3,      # Liczba iteracji (czas obliczeń)
     memory_cost=65536, # Ilość pamięci (w KB)
     parallelism=4,    # Liczba wątków
 )
 
-# Załaduj zmienne środowiskowe z pliku .env
+
 load_dotenv()
 
-# Pobierz hasło do szyfrowania z pliku .env 
 ENCRYPTION_PASSWORD = os.getenv("RSA_ENCRYPTION_PASSWORD", "default_password")
 
 
@@ -64,25 +125,26 @@ class CreateUserRequest(BaseModel):
     
 @router.post("/add")
 async def create_user(
-    request: CreateUserRequest,  # Korzystamy z modelu Pydantic
+    request: CreateUserRequest,  
     db: AsyncSession = Depends(get_db)
 ):
     try:
+         
         # Usunięcie niecyfrowych znaków z numeru telefonu
         clean_phone = ''.join(filter(str.isdigit, request.phone))
         
         # Hashowanie hasła użytkownika
-        hashed_password = ph.hash(request.password)
+        hashed_password = ph.hash(validate_password(request.password))
         
         # Generowanie kluczy RSA
         private_key, public_key = generate_keys()
         
         # Tworzenie użytkownika
         new_user = User(
-            userName=request.userName,
+            userName=validate_username(request.userName),
             password=hashed_password,
-            phone=clean_phone,
-            email=request.email,
+            phone=validate_phone(clean_phone),
+            email=validate_email_format(request.email),
             privKey=private_key,  
             pubKey=public_key
         )
@@ -91,9 +153,29 @@ async def create_user(
 
         return {"message": "User created successfully.", "userName": request.userName}
     except Exception as e:
-        # Rollback na wypadek błędu
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+
+@router.get("/me")
+async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)):
+    session_id = request.cookies.get("sessionId")
+
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    # Wyszukanie użytkownika na podstawie sesji
+    result = await db.execute(select(User).where(User.tempSessionId == session_id))
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "userId": user.userId,
+        "userName": user.userName,
+        "message": "User authenticated successfully"
+    }
 
 @router.get("/")
 async def get_users(db: AsyncSession = Depends(get_db)):
@@ -141,7 +223,7 @@ async def get_public_key(data: UserName, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 
-# Modele zapytań
+
 class UsernameCheckRequest(BaseModel):
     username: str
 
@@ -161,19 +243,16 @@ async def check_username_availability(
 ):
     try:
         username = request.username
-        # Zapytanie do bazy danych, aby sprawdzić, czy użytkownik istnieje
         result = await db.execute(select(User).filter(User.userName == username))
-        user = result.scalar()
+        user = result.scalar()     
         
-        # Jeśli użytkownik istnieje, informuje że nazwa jest zajęta
         if user:
             return {"available": False}
         
-        # Jeśli użytkownik nie istnieje, informuje że nazwa jest dostępna
         return {"available": True}
     
     except Exception as e:
-        # Obsługa błędu połączenia z bazą danych
+    
         raise HTTPException(status_code=500, detail="Database connection error")
 
 class CheckEmailForUserRequest(BaseModel):
@@ -186,18 +265,15 @@ async def check_email_for_user(
     db: AsyncSession = Depends(get_db)
 ):
     try:
-        # Zapytanie do bazy, aby znaleźć użytkownika o podanej nazwie
         result = await db.execute(select(User).filter(User.userName == request.userName))
         user = result.scalar_one_or_none()
 
-        # Sprawdzenie, czy użytkownik istnieje i czy e-mail jest zgodny
         if user:
             if user.email == request.email:
                 return {"emailMatches": True}
             else:
                 return {"emailMatches": False}
 
-        # Jeśli użytkownik nie istnieje, zwróć odpowiednią informację
         return {"message": "User not found"}
 
     except Exception as e:
@@ -233,27 +309,25 @@ async def check_phone_number_availability(
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
     
+    
 @router.get("/id", response_model=int)
 async def get_user_id(username: str, db: AsyncSession = Depends(get_db)):
     try:
-        # Zapytanie do bazy danych
         result = await db.execute(select(User).filter(User.userName == username))
         user = result.scalars().first()
 
-        # Sprawdzenie, czy użytkownik istnieje
         if not user:
             print(f"User not found for username: {username}")
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Logowanie znalezionego ID
         print(f"User found: {user.userId}")
-        return user.userId  # Zwróć userId
+        return user.userId  
     except Exception as e:
         print(f"Error occurred: {str(e)}")
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 
-# Model danych dla żądania zmiany hasła
+
 class ChangePasswordRequest(BaseModel):
     userName: str
     newPassword: str
@@ -264,17 +338,14 @@ async def change_password(
     db: AsyncSession = Depends(get_db)
 ):
     try:
-        # Sprawdzenie, czy użytkownik istnieje
         result = await db.execute(select(User).filter(User.userName == request.userName))
         user = result.scalars().first()
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found.")
 
-        # Hashowanie nowego hasła
         hashed_password = ph.hash(request.newPassword)
 
-        # Aktualizacja hasła użytkownika
         user.password = hashed_password
         db.add(user)
         await db.commit()
@@ -284,7 +355,6 @@ async def change_password(
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
     
 from fastapi import HTTPException
 

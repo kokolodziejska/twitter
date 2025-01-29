@@ -10,14 +10,12 @@ function Login() {
     const navigate = useNavigate();
     const usernameFromState = location.state?.userName || "";
 
-    // Stan dla danych formularza
     const [formData, setFormData] = useState({
         userName: "", 
         password: "",
         
     });
 
-    // Stan błędów walidacji
     const [errors, setErrors] = useState({
         userName: null,
         password: null,
@@ -33,20 +31,19 @@ function Login() {
         }
     }, [usernameFromState]);
 
-    //sprawdzenie czy istnieje użytkonik 
     const validateUsername = async (e) => {
         const username = formData.userName;
     
         try {
             const response = await API.post("/users/check-username", { username: username,});
             if (response.data.available) {
-                // Jeśli użytkownik nie istnieje
+              
                 setErrors((prevErrors) => ({
                     ...prevErrors,
                     userName: "User does not exist.",
                 }));
             } else {
-                // Jeśli użytkownik istnieje
+             
                 setErrors((prevErrors) => ({
                     ...prevErrors,
                     userName: null,
@@ -61,7 +58,6 @@ function Login() {
         }
     };
     
-    // Obsługa zmian w polach formularza
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({
@@ -70,7 +66,7 @@ function Login() {
         }));
     };
 
-    // Obsługa logowania
+    
     const handleLogin = async (event) => {
         event.preventDefault();
     
@@ -81,37 +77,37 @@ function Login() {
             });
             console.log(response.data);
 
-            // Zapisywanie tempToken w sessionStorage
+            
             sessionStorage.setItem("tempToken", response.data.tempToken);
 
             setErrors((prevErrors) => ({
                 ...prevErrors,
                 password: null, 
             }));
-            navigate("/seconauth", { state: { userName: formData.userName } });
+            navigate("/seconauth");
             console.log("Login successful!");
         } catch (error) {
             console.error(error.response?.data || "An error occurred");
             if (error.response?.status === 404) {
-                // Użytkownik nie istnieje
+                
                 setErrors((prevErrors) => ({
                     ...prevErrors,
-                    userName: error.response.data.detail, // "User not found"
+                    userName: error.response.data.detail,
                 }));
             } else if (error.response?.status === 401) {
-                // Niepoprawne hasło
+                
                 setErrors((prevErrors) => ({
                     ...prevErrors,
-                    password: error.response.data.detail, // "Incorrect password"
+                    password: error.response.data.detail, 
                 }));
             }else if (error.response?.status === 403) {
-                    // Obsługa blokady konta
+                    
                     setErrors((prevErrors) => ({
                         ...prevErrors,
-                        global: error.response.data.detail, // "Account is locked. Try again later."
+                        global: error.response.data.detail,
                 }));
             } else {
-                // Inny błąd
+                
                 setErrors((prevErrors) => ({
                     ...prevErrors,
                     userName: "An unexpected error occurred. Please try again.",

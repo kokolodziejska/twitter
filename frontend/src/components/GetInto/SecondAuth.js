@@ -9,7 +9,6 @@ function SeconAuth() {
     const navigate = useNavigate();
 
     const usernameFromState = location.state?.userName || "";
-    const numFromState = location.state?.num || "";
     const [totpCode, setTotpCode] = useState("");
     const [error, setError] = useState("");
     const [qrCodeUrl, setQrCodeUrl] = useState(null);
@@ -17,20 +16,9 @@ function SeconAuth() {
     useEffect(() => {
         const fetchQrCode = async () => {
             try {
-                const userIdResponse = await API.get("/users/id", {
-                    params: { username: usernameFromState },
-                });
-                const userId = userIdResponse.data;
-        
-                if (!userId) {
-                    console.error("User ID not found for the given username.");
-                    return;
-                }
-
-                const response = await API.post("/login/enable-totp", null, {
-                    params: {
-                        userId: userId  
-                    },
+                
+                const response = await API.post("/login/enable-totp", {
+                  
                     responseType: 'blob'  
                 });
                 console.log("QR Code response:", response);
@@ -39,7 +27,6 @@ function SeconAuth() {
                 setQrCodeUrl(qrCodeUrl);
             } catch (err) {
                 console.error("Error generating QR code:", err);
-                setError("Failed to generate QR code.");
             }
         };
 
@@ -50,16 +37,14 @@ function SeconAuth() {
 
     const handleVerifyTotp = async () => {
         try {
-            // Przesyłamy userName i code jako parametry
+            
             const response = await API.post("/login/verify-totp", null, {
                 params: {
-                    userName: usernameFromState,  // Przesyłamy userName w parametrze
-                    code: parseInt(totpCode)     // Przesyłamy kod TOTP jako liczbę
-                }
-            });
+                    code: parseInt(totpCode)
+            }});
 
             const { accessToken } = response.data;
-            navigate("/Buzzly", { state: { userName: usernameFromState }});
+            navigate("/Buzzly");
         } catch (err) {
             setError("Invalid TOTP code. Please try again.");
             console.error("Error during TOTP verification:", err);

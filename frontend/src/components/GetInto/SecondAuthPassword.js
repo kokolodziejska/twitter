@@ -11,7 +11,9 @@ function SeconAuthPassword() {
 
 
     const usernameFromState = location.state?.userName || "";
-    const numFromState = location.state?.num || ""; // Kod z e-maila przekazany w stanie
+    const doMain = location.state?.doMain || "";
+    const numFromState = location.state?.num || ""; 
+
     const [totpCode, setTotpCode] = useState("");
     const [mailCode, setMailCode] = useState("");
     const [error, setError] = useState("");
@@ -22,13 +24,11 @@ function SeconAuthPassword() {
     };
 
 
-    // Funkcja walidująca kod e-mail
-    // Funkcja walidująca kod e-mail
     const isMailCodeValid = () => {
         if (mailCode === numFromState.toString()) {
             return true;
         } else {
-            setAttempts((prev) => prev + 1); // Zwiększ licznik prób
+            setAttempts((prev) => prev + 1); 
             setError("Invalid mail code. Please check your email.");
 
             // Przekierowanie na stronę logowania po 5 nieudanych próbach
@@ -42,21 +42,28 @@ function SeconAuthPassword() {
     const handleVerifyTotp = async () => {
 
         if (!isMailCodeValid()) {
-            return; // Jeśli kod maila jest niepoprawny, zatrzymaj funkcję
+            return; 
         }
 
         try {
 
-            // Przesyłamy userName i code jako parametry
+            
             const response = await API.post("/login/verify-totp", null, {
                 params: {
-                    userName: usernameFromState,  // Przesyłamy userName w parametrze
-                    code: parseInt(totpCode)     // Przesyłamy kod TOTP jako liczbę
+                    userName: usernameFromState,  
+                    code: parseInt(totpCode)    
                 }
             });
 
             const { accessToken } = response.data;
-            handleNavigation("/new-password")
+            if(doMain){
+                
+                handleNavigation("/new-password-user")
+            }
+            else{
+                handleNavigation("/new-password")
+            }
+            
         } catch (err) {
             setError("Invalid TOTP code. Please try again.");
             console.error("Error during TOTP verification:", err);

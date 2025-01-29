@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation,useNavigate  } from "react-router-dom";
-import blueImage from "../../assets/blue.jpg"; // Załaduj obrazek
-import "../../style/Register.css"; // Załaduj istniejący CSS (jeśli pasuje do układu)
+import blueImage from "../../assets/blue.jpg"; 
+import "../../style/Register.css"; 
 
 function WelcomePage() {
     const location = useLocation();

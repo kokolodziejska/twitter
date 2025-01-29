@@ -13,6 +13,7 @@ import SeconAuth from './components/GetInto/SecondAuth.js';
 import ChangePassword from './components/GetInto/ChangePassword.js';
 import ChangePasswordemail from './components/GetInto/ChangePasswordemail.js';
 import SeconAuthPassword from './components/GetInto/SecondAuthPassword.js';
+import ChangePasswordMain from './components/GetInto/ChangePasswordToMain.js';
 
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
                     <Route path="/seconauth-password" element={<SeconAuthPassword/>}/>
                     <Route path="/new-password-email" element={<ChangePasswordemail/>}/>
                     <Route path='/new-password' element={<ChangePassword/>}/>
+                    <Route path='/new-password-user' element={<ChangePasswordMain/>}/>
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/welcome" element={<WelcomePage />} />
                     <Route path="/Buzzly" element={<MainPage />} />
@@ -54,6 +56,7 @@ function App() {
                 <h5>Message from Backend:</h5>
                 <p>{message}</p>
             </div>
+            
         </div>
     );
 }

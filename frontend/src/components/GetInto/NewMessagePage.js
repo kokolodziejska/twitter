@@ -18,7 +18,7 @@ function NewMessagePage() {
 
     const [formData, setFormData] = useState({
         message: "",
-        picture: "", // Base64 obrazu
+        picture: "", 
     });
 
     const [errors, setErrors] = useState({
@@ -26,7 +26,6 @@ function NewMessagePage() {
         picture: null,
     });
 
-    // Funkcja walidująca wiadomość
     const validateMessage = () => {
         const message = formData.message;
 
@@ -42,7 +41,6 @@ function NewMessagePage() {
         return true;
     };
 
-    // Obsługa zmiany tekstu w polach formularza
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({
@@ -51,15 +49,11 @@ function NewMessagePage() {
         }));
     };
 
-    // Obsługa podpisu
     const handleGenerateSignature = () => {
         setDoSign(!doSign);
     };
 
 
-
-
-    // Obsługa załączania zdjęcia
     const handleImageUpload = (e) => {
         const file = e.target.files?.[0];
         if (!file) {
@@ -90,11 +84,11 @@ function NewMessagePage() {
             return;
         }
 
-        const reader = new FileReader(); // Brakowało zakończenia poprzednich bloków
+        const reader = new FileReader(); 
         reader.onload = () => {
             setFormData((prevData) => ({
                 ...prevData,
-                picture: reader.result.split(",")[1], // Base64 bez prefixu
+                picture: reader.result.split(",")[1], 
             }));
         };
         reader.onerror = (error) => {
@@ -109,13 +103,13 @@ function NewMessagePage() {
 
 
     const handleNavigation = (path) => {
-        navigate(path, { state: { userName: usernameFromState } });
+        navigate(path);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
     
-        // Walidacja wiadomości
+     
         const isMessageValid = validateMessage();
         if (!isMessageValid) {
             console.warn("Message validation failed.");
@@ -123,9 +117,9 @@ function NewMessagePage() {
         }
     
         try {
-            console.log("Username being sent to API:", usernameFromState);
+            console.log("Username being sent to API:");
     
-            // Pobranie userId na podstawie nazwy użytkownika
+            
             const userIdResponse = await API.get("/users/id", {
                 params: { username: usernameFromState },
             });
@@ -136,29 +130,28 @@ function NewMessagePage() {
                 return;
             }
     
-            // Tworzenie payloadu
             const payload = {
                 userId: userId,
                 userName: usernameFromState,
                 message: formData.message,
-                image: formData.picture || null, // Jeśli brak pliku, ustawiamy null
+                image: formData.picture || null, 
                 doSign: doSign,
             };
     
             console.log("Payload being sent to API:", payload);
     
-            // Wysłanie wiadomości do API
+            
             const messageResponse = await API.post("/messages/add", payload);
             console.log("Response from API:", messageResponse.data);
     
-            // Reset formularza po sukcesie
+            
             setFormData({
                 message: "",
                 picture: "",
             });
     
             setSuccessMessage("Post has been successfully sent!");
-            setTimeout(() => setSuccessMessage(""), 5000); // Komunikat znika po 5 sekundach
+            setTimeout(() => setSuccessMessage(""), 5000); 
         } catch (error) {
             console.error("Error occurred:", error.response?.data || error.message);
     
@@ -174,7 +167,6 @@ function NewMessagePage() {
         <div className="main">
             <LeftBar
                 profilePicture={profilePicture}
-                username={usernameFromState}
                 currentPage={"/new-message"}
                 handleNavigation={handleNavigation}
             />

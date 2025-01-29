@@ -22,6 +22,7 @@ class User(Base):
     totpSecret = Column(String, nullable=True)
     isTotpEnabled = Column(Boolean, default=False)  # Czy TOTP jest włączone
     tempSessionId = Column(Text,  nullable=True) 
+    userDescription = Column(Text, nullable=True) 
 
 class Message(Base):
     __tablename__ = "messages"

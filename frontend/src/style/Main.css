@@ -218,7 +218,7 @@
     flex-direction: row;
     margin-top: 4vh;
     gap: 4vw;
-    margin-bottom: 10vh;
+    margin-bottom: 8vh;
 }
 
 .profile-edit-button{
@@ -246,6 +246,7 @@
     margin-left: 3vw;
     text-align: left;
     width: 100%;
+    font-size: 0.7vw;
 
 }
 .pub-key{
@@ -489,6 +490,8 @@
 }
 
 .message-image {
+    min-width: 15vw;
+    min-height: 20vh;
     max-width: 30vw;
     max-height: 40vh;
     margin-top: 1vh;
@@ -603,7 +606,7 @@
 
 .header-styling{
     margin-top: 1vh;
-    font-size: 1.7vh;
+    font-size: 0.7vw;
     font-weight: 500;
     margin-bottom: 1.5vh;
 }
@@ -621,14 +624,14 @@
     justify-content: flex-start;
     align-items: center;
     flex-direction: row;
-    gap: 1.5vw;
+    gap: 0.9vw;
     margin-top: 0.5vh;
     width: 100%;
-
+    font-size: 0.7vw;
 }
 
 .section{
-    font-size: 1.4vh;
+    font-size: 0.8vw;
     font-weight: 500;
     margin-bottom: 0.3vh;
     margin-top: 0.3vh;
@@ -642,7 +645,7 @@
 }
 
 .arrow{
-    font-size: 1.9vh;
+    font-size: 0.7vw;
     font-weight: 700;
     width: 0.2vw;
 }
@@ -653,6 +656,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    font-size: 0.7vw;
 }
 
 .markdown-bold-result {

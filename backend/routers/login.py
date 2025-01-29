@@ -11,27 +11,25 @@ import pyotp
 import qrcode
 from io import BytesIO
 from fastapi.responses import StreamingResponse
-from utils.jwt_utils import create_temporary_token
-from utils.jwt_utils import verify_token
 from fastapi import APIRouter, Depends, HTTPException, Response
-
+import uuid
+from fastapi import Request
 
 ph = PasswordHasher(
     time_cost=3,      # Liczba iteracji (czas obliczeń)
     memory_cost=65536, # Ilość pamięci (w KB)
     parallelism=4,    # Liczba wątków
 )
-router = APIRouter()  # This router will now handle all login-related endpoints
+router = APIRouter() 
 
-# Function to get the user from the session (cookie or other method)
+
 async def get_user_from_session(request: Request, db: AsyncSession):
-    # Pobranie userId z ciasteczka
+
     user_id = request.cookies.get("userId")
 
     if not user_id:
         raise HTTPException(status_code=401, detail="User not authenticated")
 
-    # Pobranie użytkownika z bazy danych
     result = await db.execute(select(User).where(User.userId == int(user_id)))
     user = result.scalars().first()
 
@@ -40,7 +38,7 @@ async def get_user_from_session(request: Request, db: AsyncSession):
 
     return user
 
-# Model for login requests
+
 class LoginRequest(BaseModel):
     userName: str
     password: str
@@ -75,25 +73,15 @@ async def login_user(data: LoginRequest, response: Response, db: AsyncSession = 
         user.last = datetime.utcnow()
         await db.commit()
         print("Password is correct!")
-        
-        # Generowanie tymczasowego tokenu JWT
-        token_data = {
-            "userId": user.userId,
-            "userName": user.userName,
-        }
-        temp_token = create_temporary_token(token_data)
-        
-        # Zapisanie tokenu w kolumnie tempSessionId
-        user.tempSessionId = temp_token
+    
+        sessionId = str(uuid.uuid4())
+        user.tempSessionId = sessionId
         await db.commit()
 
-        # Ustawienie userId w ciasteczku
-        response.set_cookie("userId", str(user.userId), httponly=True, secure=True)
-
-        # Zwróć odpowiedź z tymczasowym tokenem
+        response.set_cookie("sessionId", sessionId, httponly=True, secure=True, samesite="None")
+        
         return {
-            "message": "Login successful. Proceed to 2FA verification.",
-            "tempToken": temp_token
+            "message": "Login successful. Proceed to 2FA verification."
         }
     
     except VerifyMismatchError:
@@ -114,8 +102,13 @@ async def login_user(data: LoginRequest, response: Response, db: AsyncSession = 
         
 
 @router.post("/enable-totp")
-async def enable_totp(userId: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.userId == userId))
+async def enable_totp(request: Request, db: AsyncSession = Depends(get_db)):
+    session_id = request.cookies.get("sessionId")
+
+    if not session_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    result = await db.execute(select(User).where(User.tempSessionId == session_id))
     user = result.scalars().first()
 
     if not user:
@@ -124,16 +117,14 @@ async def enable_totp(userId: int, db: AsyncSession = Depends(get_db)):
     if user.totpSecret:
         raise HTTPException(status_code=400, detail="TOTP is already configured for this user")
 
-    # Generowanie unikalnego sekretu TOTP
+    
     totp_secret = pyotp.random_base32()
     user.totpSecret = totp_secret
     await db.commit()
 
-    # Tworzenie URL dla aplikacji mobilnej (np. Google Authenticator)
     totp = pyotp.TOTP(totp_secret)
     qr_url = totp.provisioning_uri(name=user.userName, issuer_name="YourAppName")
 
-    # Generowanie kodu QR
     qr = qrcode.make(qr_url)
     buf = BytesIO()
     qr.save(buf)
@@ -141,10 +132,15 @@ async def enable_totp(userId: int, db: AsyncSession = Depends(get_db)):
 
     return StreamingResponse(buf, media_type="image/png")
 
+
 @router.post("/verify-totp")
-async def verify_totp(code: int, userName: str, db: AsyncSession = Depends(get_db)):
-    # Pobierz użytkownika na podstawie userName
-    result = await db.execute(select(User).where(User.userName == userName))
+async def verify_totp(code: int, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    session_id = request.cookies.get("sessionId")
+
+    if not session_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    result = await db.execute(select(User).where(User.tempSessionId == session_id))
     user = result.scalars().first()
 
     if not user or not user.totpSecret:
@@ -154,7 +150,18 @@ async def verify_totp(code: int, userName: str, db: AsyncSession = Depends(get_d
     totp = pyotp.TOTP(user.totpSecret)
     if not totp.verify(str(code)):  # TOTP.verify wymaga stringa, więc konwertujemy int na string
         raise HTTPException(status_code=400, detail="Invalid TOTP code")
+    
+    
+    newsessionId = str(uuid.uuid4())
+    user.tempSessionId = newsessionId
+    await db.commit()
+    
+    response.set_cookie(
+        key="sessionId",
+        value=newsessionId,
+        httponly=True,
+        secure=True,
+        samesite="None"
+    )
 
-    # Jeśli weryfikacja się powiedzie, zwróć token dostępu
-    access_token = create_temporary_token({"userId": user.userId}, expires_delta=timedelta(hours=2))
-    return {"message": "2FA verification successful.", "accessToken": access_token}
+    return {"message": "2FA verification successful."}

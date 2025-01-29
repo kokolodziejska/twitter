@@ -29,7 +29,7 @@ function SignUp(){
         repeatPassword: null,
     });
 
-    // Obsługa zmiany wartości pól
+   
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({
@@ -38,19 +38,19 @@ function SignUp(){
         }));
     };
 
-    // Sprawdzenie Username
+  
     const validateUsername = async () => {
 
-        const username = formData.userName; // Pobranie wartości username
+        const username = formData.userName; 
         
-        if (username.length < 3 || username.length > 30) { // Warunek dla długości
+        if (username.length < 3 || username.length > 30) {
           setErrors((prevErrors) => ({
             ...prevErrors,
-            userName: "Username must be between 3 and 30 characters.", // Ustawienie błędu
+            userName: "Username must be between 3 and 30 characters.", 
           }));
           return false;
         }
-        // Jeśli długość jest poprawna, sprawdzam dostęność nazwy użytkownika
+      
 
         try {
             const response = await API.post("/users/check-username", {
@@ -78,31 +78,30 @@ function SignUp(){
       };
     
 
-    // Sprawdzenie E-maila
+ 
     const validateEmail = async () => {
-        const email = formData.email; // Pobranie wartości e-maila
-        
-        // Walidacja lokalna: sprawdzenie formatu e-maila
+        const email = formData.email; 
+     
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             setErrors((prevErrors) => ({
                 ...prevErrors,
-                email: "Invalid email format.", // Błąd formatu e-maila
+                email: "Invalid email format.",
             }));
             return false;
         }
         
-        // Walidacja w backendzie: sprawdzenie dostępności e-maila
+      
         try {
             const response = await API.post("/users/check-email", { email: email});
             if (!response.data.available) {
                 setErrors((prevErrors) => ({
                     ...prevErrors,
-                    email: "This email address is already registered.", // E-mail jest zajęty
+                    email: "This email address is already registered.", 
                 }));
                 return false;
             }
-            // Jeśli e-mail jest dostępny, usuń błąd
+         
             setErrors((prevErrors) => ({
                 ...prevErrors,
                 email: null,
@@ -112,18 +111,17 @@ function SignUp(){
             console.error("Error checking email availability:", error);
             setErrors((prevErrors) => ({
                 ...prevErrors,
-                email: "Could not verify email availability. Try again later.", // Błąd serwera
+                email: "Could not verify email availability. Try again later.", 
             }));
             return false;
         }
     };
-    
-    // Sprawdzenie Numeru telefonu
+
     const validatePhone = async () => {
         const phoneNumber = formData.phoneNumber;
     
-        // Sprawdzenie, czy numer telefonu zawiera tylko cyfry, spacje i dozwolone znaki
-        const phoneRegex = /^[0-9\s\+\-\(\)]*$/; // Dozwolone znaki: cyfry, spacje, +, -, ()
+        
+        const phoneRegex = /^[0-9\s\+\-\(\)]*$/; 
         if (!phoneRegex.test(phoneNumber)) {
             setErrors((prevErrors) => ({
                 ...prevErrors,
@@ -132,10 +130,10 @@ function SignUp(){
             return false;
         }
     
-        // Czyszczenie numeru telefonu - usunięcie wszystkich znaków niebędących cyframi
+       
         const cleanPhoneNumber = phoneNumber.replace(/\D/g, "");
     
-        // Sprawdzenie długości numeru telefonu
+        
         if (cleanPhoneNumber.length < 9 || cleanPhoneNumber.length > 15) {
             setErrors((prevErrors) => ({
                 ...prevErrors,
@@ -144,7 +142,7 @@ function SignUp(){
             return false;
         }
     
-        // Wywołanie backendu w celu sprawdzenia dostępności numeru
+        
         try {
             const response = await API.post("/users/check-phone-number", { phone_number: cleanPhoneNumber });
             if (!response.data.available) {
@@ -156,7 +154,7 @@ function SignUp(){
             }
             setErrors((prevErrors) => ({
                 ...prevErrors,
-                phoneNumber: null, // Usunięcie błędu, jeśli wszystko jest OK
+                phoneNumber: null,
             }));
             return true;
         } catch (error) {
@@ -169,19 +167,19 @@ function SignUp(){
         }
     };
 
-    //sprawdzenie hasła
+    
     const validatePassword = () => {
         const password = formData.password;
     
-        // Warunki walidacji
+        
         const minLength = 8;
         
-        const hasUpperCase = /[A-Z]/.test(password); // Co najmniej jedna wielka litera
-        const hasLowerCase = /[a-z]/.test(password); // Co najmniej jedna mała litera
-        const hasNumber = /[0-9]/.test(password);    // Co najmniej jedna cyfra
-        const hasSpecialChar = /[@#$%^&*(),.?":{}|<>!]/.test(password); // Co najmniej jeden znak specjalny
+        const hasUpperCase = /[A-Z]/.test(password); 
+        const hasLowerCase = /[a-z]/.test(password); 
+        const hasNumber = /[0-9]/.test(password);    
+        const hasSpecialChar = /[@#$%^&*(),.?":{}|<>!]/.test(password); 
     
-        // Sprawdzenie długości
+
         if (password.length < minLength ) {
             setErrors((prevErrors) => ({
                 ...prevErrors,
@@ -190,7 +188,7 @@ function SignUp(){
             return false;
         }
     
-        // Sprawdzenie warunków
+       
         if (!hasUpperCase) {
             setErrors((prevErrors) => ({
                 ...prevErrors,
@@ -220,19 +218,19 @@ function SignUp(){
             return false;
         }
     
-        // Jeśli wszystkie warunki są spełnione
+        
         setErrors((prevErrors) => ({
             ...prevErrors,
-            password: null, // Usuń błędy
+            password: null, 
         }));
         return true;
     };
 
-    //sprawdzenie powtórzenia hasła
+    
     const validateRepeatPassword = () => {
         const { password, repeatPassword } = formData;
     
-        // Sprawdzenie czy hasła są identyczne
+        
         if (password !== repeatPassword) {
             setErrors((prevErrors) => ({
                 ...prevErrors,
@@ -241,18 +239,18 @@ function SignUp(){
             return false;
         }
     
-        // Jeśli hasła są zgodne
+        
         setErrors((prevErrors) => ({
             ...prevErrors,
-            repeatPassword: null, // Usuń błędy
+            repeatPassword: null, 
         }));
         return true;
     };
 
 
-    // Obsługa wysłania formularza
+    
     const handleSubmit = async (e) => {
-        e.preventDefault(); // Zapobiega odświeżeniu strony
+        e.preventDefault();
         
         const isUsernameValid = await validateUsername();
         const isPhoneValid = await validatePhone();
@@ -263,7 +261,7 @@ function SignUp(){
         if (isUsernameValid && isPhoneValid && isEmailValid && isPasswordValid && isRepeatPasswordValid) {
             try {
                 console.log(formData)
-                // Wysłanie danych do backendu
+                
                 const response = await API.post("/users/add", {
                     userName: formData.userName,
                     password: formData.password,
@@ -278,11 +276,11 @@ function SignUp(){
             } catch (error) {
                 console.error("Error registering user:", error);
     
-                // Obsługa błędów serwera
+                
                 if (error.response && error.response.data && error.response.data.detail) {
                     setErrors((prevErrors) => ({
                         ...prevErrors,
-                        backend: error.response.data.detail, // Błąd zwrócony przez backend
+                        backend: error.response.data.detail, 
                     }));
                 } else {
                     setErrors((prevErrors) => ({
@@ -297,16 +295,14 @@ function SignUp(){
     const handlePasswordChange = (e) => {
         const password = e.target.value;
     
-        // Update the form data
+        
         setFormData((prevData) => ({
             ...prevData,
             password,
         }));
     
-        // Validate password (if required)
         validatePassword();
     
-        // Check password strength using zxcvbn
         const strength = zxcvbn(password);
         setPasswordStrength(strength.score); 
         

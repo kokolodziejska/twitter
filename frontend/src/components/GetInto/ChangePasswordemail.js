@@ -88,13 +88,13 @@ function ChangePasswordemail() {
 
     const handleLogin = async (event) => {
         event.preventDefault();
-        console.log("tu")
+        
 
         const isUsernameValid = await validateUsername();
         const isEmailValid = await validateEmail();
 
         if (isUsernameValid && isEmailValid) {
-            console.log("tam")
+            
 
             const email=formData.email
             const num = generateSixDigitNumber()

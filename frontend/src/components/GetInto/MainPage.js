@@ -7,12 +7,12 @@ import API from "../configurations/api";
 import bacground from "../../assets/1.jpg";
 
 function parseMessage(message) {
-    // Escapowanie znaków HTML
+    
     const escapedMessage = message
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-    // Zamiana znaczników kolorów na klasy CSS
+ 
     const coloredMessage = escapedMessage
         .replace(/\[red\](.*?)\[\/red\]/g, '<span class="text-red">$1</span>')
         .replace(/\[green\](.*?)\[\/green\]/g, '<span class="text-green">$1</span>')
@@ -21,9 +21,8 @@ function parseMessage(message) {
         .replace(/\[purple\](.*?)\[\/purple\]/g, '<span class="text-purple">$1</span>');
 
 
-    // Obsługa list punktowanych i numerowanych
     const listMessage = coloredMessage
-        // Listy numerowane: znajdź wszystkie grupy numerowanych pozycji i otocz je <ol>
+        
         .replace(/(\d+\..*?(\n|$))+/g, (match) => {
             const items = match
                 .trim()
@@ -32,7 +31,7 @@ function parseMessage(message) {
                 .join("");
             return `<ol>${items}</ol>`;
         })
-        // Listy punktowane: znajdź wszystkie grupy punktowanych pozycji i otocz je <ul>
+        
         .replace(/(- .*?(\n|$))+/g, (match) => {
             const items = match
                 .trim()
@@ -42,27 +41,24 @@ function parseMessage(message) {
             return `<ul>${items}</ul>`;
         });
 
-    // Zamiana znaczników Markdown na HTML
+    
     const formattedMessage = listMessage
-        .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>') // ***bold and italic***
-        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')           // **bold**
-        .replace(/\*(.*?)\*/g, '<i>$1</i>')               // *italic*
-        .replace(/\n/g, '<br>');                         // Nowe linie
+        .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>') 
+        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')           
+        .replace(/\*(.*?)\*/g, '<i>$1</i>')               
+        .replace(/\n/g, '<br>');                         
 
     return formattedMessage;
 }
 
-
-
 function MainPage() {
-    const location = useLocation();
     const navigate = useNavigate();
-    const usernameFromState = location.state?.userName || "";
+
 
     const [messages, setMessages] = useState([]);
 
     const handleNavigation = (path) => {
-        navigate(path, { state: { userName: usernameFromState } });
+        navigate(path);
     };
 
     useEffect(() => {
@@ -91,12 +87,10 @@ function MainPage() {
         );
     };
     
-
     return (
         <div className="main">
             <LeftBar
                 profilePicture={profilePicture}
-                username={usernameFromState}
                 currentPage={"/Buzzly"}
                 handleNavigation={handleNavigation}
             />

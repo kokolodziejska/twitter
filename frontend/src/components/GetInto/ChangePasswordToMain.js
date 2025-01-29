@@ -6,24 +6,23 @@ import API from "../configurations/api";
 import zxcvbn from "zxcvbn";
 
 
-function ChangePassword(){
+function ChangePasswordMain(){
 
     const location = useLocation();
     const usernameFromState = location.state?.userName || "";
     const [passwordStrength, setPasswordStrength] = useState(0);
     const navigate = useNavigate();
 
-  
     const [formData, setFormData] = useState({
         password: "",
         repeatPassword: "",
     });
 
-
   const [errors, setErrors] = useState({
         password: null,
         repeatPassword: null,
     });
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -33,13 +32,11 @@ function ChangePassword(){
         }));
     };
 
-
-
     const validatePassword = () => {
         const password = formData.password;
         const minLength = 8;
         const hasUpperCase = /[A-Z]/.test(password); 
-        const hasLowerCase = /[a-z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password); 
         const hasNumber = /[0-9]/.test(password);    
         const hasSpecialChar = /[@#$%^&*(),.?":{}|<>!]/.test(password); 
     
@@ -82,7 +79,7 @@ function ChangePassword(){
     
         setErrors((prevErrors) => ({
             ...prevErrors,
-            password: null,
+            password: null, 
         }));
         return true;
     };
@@ -97,7 +94,7 @@ function ChangePassword(){
             }));
             return false;
         }
-
+    
         setErrors((prevErrors) => ({
             ...prevErrors,
             repeatPassword: null, 
@@ -120,11 +117,13 @@ function ChangePassword(){
                 });
     
                 if (response.status === 200) {
-                    navigate("/login", { state: { userName: usernameFromState } });
+                    
+                    navigate("/profile", { state: { userName: usernameFromState } });
                 }
             } catch (error) {
                 console.error("Error changing password:", error);
     
+              
                 if (error.response && error.response.data && error.response.data.detail) {
                     setErrors((prevErrors) => ({
                         ...prevErrors,
@@ -226,4 +225,4 @@ function ChangePassword(){
     </>);
 }
 
-export default ChangePassword
+export default ChangePasswordMain
