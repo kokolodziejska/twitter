@@ -108,8 +108,7 @@ function NewMessagePage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
-     
+        
         const isMessageValid = validateMessage();
         if (!isMessageValid) {
             console.warn("Message validation failed.");
@@ -117,22 +116,7 @@ function NewMessagePage() {
         }
     
         try {
-            console.log("Username being sent to API:");
-    
-            
-            const userIdResponse = await API.get("/users/id", {
-                params: { username: usernameFromState },
-            });
-            const userId = userIdResponse.data;
-    
-            if (!userId) {
-                console.error("User ID not found for the given username.");
-                return;
-            }
-    
             const payload = {
-                userId: userId,
-                userName: usernameFromState,
                 message: formData.message,
                 image: formData.picture || null, 
                 doSign: doSign,
@@ -140,11 +124,9 @@ function NewMessagePage() {
     
             console.log("Payload being sent to API:", payload);
     
-            
             const messageResponse = await API.post("/messages/add", payload);
             console.log("Response from API:", messageResponse.data);
     
-            
             setFormData({
                 message: "",
                 picture: "",

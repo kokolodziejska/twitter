@@ -54,7 +54,7 @@ function parseMessage(message) {
 
 
 
-function MainPage() {
+function UserPostPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const usernameFromState = location.state?.userName || "";
@@ -68,23 +68,7 @@ function MainPage() {
     useEffect(() => {
         const fetchMessages = async () => {
             try {
-                console.log("Username being sent to API:", usernameFromState);
-    
-                
-                const userIdResponse = await API.get("/users/id", {
-                    params: { username: usernameFromState },
-                });
-                const userId = userIdResponse.data;
-    
-                if (!userId) {
-                    console.error("User ID not found for the given username.");
-                    return;
-                }
-    
-                
-                const response = await API.post("/messages/user", {
-                    userId: userId, 
-                });
+                const response = await API.post("/messages/user");
                 setMessages(response.data);
             } catch (error) {
                 console.error("Error fetching messages:", error.response?.data || error.message);
@@ -170,4 +154,4 @@ function MainPage() {
     );
 }
 
-export default MainPage;
+export default UserPostPage;

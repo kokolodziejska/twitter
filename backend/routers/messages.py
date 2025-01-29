@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException 
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from models import Message
@@ -48,8 +48,6 @@ def generate_signature(private_key: str, message: str) -> str:
 router = APIRouter()  
 
 class CreateMessageRequest(BaseModel):
-    userId: int
-    userName: str
     message: str
     image: str | None = None  # Obraz jest opcjonalny
     doSign: bool 
@@ -66,22 +64,35 @@ class MessageResponse(BaseModel):
   
 @router.post("/add", response_model=MessageResponse)
 async def create_message(
-    request: CreateMessageRequest,
+    message_data: CreateMessageRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     try:
+        
+        session_id = request.cookies.get("sessionId")
+
+        if not session_id:
+            raise HTTPException(status_code=401, detail="User not authenticated")
+
+        result = await db.execute(select(User).where(User.tempSessionId == session_id))
+        user = result.scalars().first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
         # Obsługa podpisu
         signature = None
-        if request.doSign:
-            private_key = await get_private_key_for_user(request.userId, db)
+        if message_data.doSign:
+            private_key = await get_private_key_for_user(user.userId, db)
             signature = generate_signature(private_key, request.message)
 
         # Tworzenie nowej wiadomości
         new_message = Message(
-            userId=request.userId,
-            userName=request.userName,
-            message=request.message,
-            image=request.image if request.image else None,
+            userId=user.userId,
+            userName=user.userName,
+            message=message_data.message,
+            image=message_data.image if message_data.image else None,
             date=datetime.utcnow(),
             signature=signature
         )
@@ -141,15 +152,24 @@ async def get_all_messages(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
     
     
-class UserMessagesRequest(BaseModel):
-    userId: int
+
 
 @router.post("/user", response_model=list[MessageResponse])
 async def get_user_messages(
-    request: UserMessagesRequest, 
+     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     try:
+        session_id = request.cookies.get("sessionId")
+
+        if not session_id:
+            raise HTTPException(status_code=401, detail="User not authenticated")
+
+        result = await db.execute(select(User).where(User.tempSessionId == session_id))
+        user = result.scalars().first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
         # Pobieranie wiadomości użytkownika na podstawie userId
         query = (
             select(
@@ -161,7 +181,7 @@ async def get_user_messages(
                 Message.userName,
                 Message.signature,
             )
-            .where(Message.userId == request.userId)  
+            .where(Message.userId == user.userId)  
             .order_by(Message.date.desc())           # Sortowanie według daty malejąco
         )
         result = await db.execute(query)
