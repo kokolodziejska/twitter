@@ -11,11 +11,6 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://localhost", "https://127.0.0.1",  
-        "https://localhost:3000", "https://127.0.0.1:3000",  
-        "https://localhost:3001", "https://127.0.0.1:3001",  
-        "https://localhost:3002", "https://127.0.0.1:3002",
-        "https://localhost:3003", "https://127.0.0.1:3003",
-        "https://localhost:3004", "https://127.0.0.1:3004",
    ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -31,6 +26,6 @@ def read_root():
     return {"message": "Hello, backend!"}
 
 # Register routers
-app.include_router(users.router, prefix="/users", tags=["Users"])
-app.include_router(login.router, prefix="/login", tags=["Login"])  # Dedicated login router
-app.include_router(messages.router, prefix="/messages", tags=["Messages"])
+app.include_router(users.router, prefix="/api/users", tags=["Users"])
+app.include_router(login.router, prefix="/api/login", tags=["Login"])  # Dedicated login router
+app.include_router(messages.router, prefix="/api/messages", tags=["Messages"])

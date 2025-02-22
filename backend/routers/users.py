@@ -339,20 +339,6 @@ async def change_password(
     
 from fastapi import HTTPException
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @router.get("/")
 async def get_users(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User))
@@ -369,6 +355,7 @@ async def get_email(data: UserName, db: AsyncSession = Depends(get_db)):
     if user:
         return {"email": user.email}
     return {"message": "User not found"}
+
 
 @router.post("/phone")
 async def get_phone(data: UserName, db: AsyncSession = Depends(get_db)):
@@ -399,16 +386,11 @@ async def get_public_key(data: UserName, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 
-
-
-
 class EmailCheckRequest(BaseModel):
     email: str
 
 class PhoneNumberCheckRequest(BaseModel):
     phone_number: str
-
-
 
 
 # Sprawdzanie dostępności e-maila
@@ -459,7 +441,39 @@ async def get_user_id(username: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 
+@router.post("/set-mail-code")
+async def set_mail_code(request: Request, mail_code: int, db: AsyncSession = Depends(get_db)):
+    session_id = request.cookies.get("sessionId")
 
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
+    result = await db.execute(select(User).where(User.tempSessionId == session_id))
+    user = result.scalars().first()
 
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.mailCode = mail_code
+    await db.commit()
+
+    return {"message": "Mail code updated successfully", "mailCode": mail_code}
+
+@router.post("/verify-mail-code")
+async def verify_mail_code(request: Request, mail_code: int, db: AsyncSession = Depends(get_db)):
+    session_id = request.cookies.get("sessionId")
+
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    result = await db.execute(select(User).where(User.tempSessionId == session_id))
+    user = result.scalars().first()
+
+    if not user or user.mailCode is None:
+        raise HTTPException(status_code=404, detail="User not found or mail code not set")
+
+    if user.mailCode != mail_code:
+        raise HTTPException(status_code=400, detail="Invalid mail code")
+
+    return {"message": "Mail code is correct"}
 

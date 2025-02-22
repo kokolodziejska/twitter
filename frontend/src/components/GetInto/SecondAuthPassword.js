@@ -9,7 +9,6 @@ function SeconAuthPassword() {
     const navigate = useNavigate();
 
     const doMain = location.state?.doMain || "";
-    const numFromState = location.state?.num || ""; 
 
     const [totpCode, setTotpCode] = useState("");
     const [mailCode, setMailCode] = useState("");
@@ -20,25 +19,30 @@ function SeconAuthPassword() {
         navigate(path);
     };
 
-    const isMailCodeValid = () => {
+    const isMailCodeValid = async () => {
         if (!mailCode) {
             setError("Mail code is required.");
             return false;
         }
-        console.log(numFromState)
-        console.log(mailCode)
     
-        const newAttempts = attempts + 1;
+        try {
+            const response = await API.post("/verify-mail-code", null, {
+                params: { mail_code: parseInt(mailCode, 10) }
+            });
     
-        if (parseInt(mailCode, 10) === parseInt(numFromState, 10)) {  
+            console.log("Mail code verified:", response.data.message);
             return true;
-        } else {
+        } catch (error) {
+            console.error("Invalid mail code:", error.response?.data?.detail);
+    
+            const newAttempts = attempts + 1;
             setAttempts(newAttempts);
             setError("Invalid mail code. Please check your email.");
     
             if (newAttempts >= 5) {
                 navigate("/login");
             }
+
             return false;
         }
     };
@@ -49,11 +53,17 @@ function SeconAuthPassword() {
             return; 
         }
         try { 
+            const cleanedTotpCode = totpCode.replace(/[\s\t]/g, "");
+
+            if (cleanedTotpCode.length !== 6) {
+                setError("TOTP code must be exactly 6 digits.");
+                return;
+            }
+            
             const response = await API.post("/login/verify-totp", null, {
-                params: { 
-                    code: parseInt(totpCode)    
-                }
-            });
+                params: {
+                    code: cleanedTotpCode
+            }});
 
             if(doMain){
                 
@@ -90,7 +100,7 @@ function SeconAuthPassword() {
                        
                         <label htmlFor="totpCode">Enter your TOTP code:</label>
                         <input
-                            type="number"
+                            type="text"
                             id="totpCode"
                             value={totpCode}
                             onChange={(e) => setTotpCode(e.target.value)}

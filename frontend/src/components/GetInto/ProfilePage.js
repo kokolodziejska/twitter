@@ -50,14 +50,25 @@ function ProfilePage() {
         fetchData();
     }, []);
 
-    const handleNavigation = (path) => {
+    const handleNavigation =  (path) => {
         navigate(path);
     };
-    const handleNavigationPassword = (path) => {
-        const num = generateSixDigitNumber()
-        console.log({ email }, "-> Your code:", { num })
-        const doMain = true
-        navigate(path, { state: { userName: userName, num: num, doMain: doMain } });
+    const handleNavigationPassword = async (path) => {
+        try{
+            const num = generateSixDigitNumber()
+            console.log({ email }, "-> Your code:", { num })
+
+            await API.post("/users/set-mail-code", null, {
+                params: { mail_code: num }
+            });
+
+            const doMain = true
+            navigate("/seconauth-password", { state: {doMain: doMain} });
+
+         }catch (error) {
+            console.error("Error setting mail code:", error);
+        }
+
     };
 
     return (

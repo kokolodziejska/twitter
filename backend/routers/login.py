@@ -102,7 +102,7 @@ async def login_user(data: LoginRequest, response: Response, db: AsyncSession = 
         
 
 @router.post("/enable-totp")
-async def enable_totp(request: Request, db: AsyncSession = Depends(get_db)):
+async def enable_totp(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     session_id = request.cookies.get("sessionId")
 
     if not session_id:
@@ -123,7 +123,7 @@ async def enable_totp(request: Request, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     totp = pyotp.TOTP(totp_secret)
-    qr_url = totp.provisioning_uri(name=user.userName, issuer_name="YourAppName")
+    qr_url = totp.provisioning_uri(name=user.userName, issuer_name="Buzzly")
 
     qr = qrcode.make(qr_url)
     buf = BytesIO()
@@ -134,7 +134,7 @@ async def enable_totp(request: Request, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/verify-totp")
-async def verify_totp(code: int, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+async def verify_totp(code: str, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     session_id = request.cookies.get("sessionId")
 
     if not session_id:
@@ -146,16 +146,20 @@ async def verify_totp(code: int, request: Request, response: Response, db: Async
     if not user or not user.totpSecret:
         raise HTTPException(status_code=404, detail="User not found or TOTP not configured")
 
-    # Weryfikacja kodu TOTP
+    cleaned_code = code.strip()
+    if not cleaned_code.isdigit():
+        raise HTTPException(status_code=400, detail="Invalid TOTP code format")
+
+    
     totp = pyotp.TOTP(user.totpSecret)
-    if not totp.verify(str(code)):  # TOTP.verify wymaga stringa, więc konwertujemy int na string
+    if not totp.verify(cleaned_code):  
         raise HTTPException(status_code=400, detail="Invalid TOTP code")
-    
-    
+
+  
     newsessionId = str(uuid.uuid4())
     user.tempSessionId = newsessionId
     await db.commit()
-    
+
     response.set_cookie(
         key="sessionId",
         value=newsessionId,

@@ -94,13 +94,22 @@ function ChangePasswordemail() {
         const isEmailValid = await validateEmail();
 
         if (isUsernameValid && isEmailValid) {
-            
+            try {
 
             const email=formData.email
             const num = generateSixDigitNumber()
+
             console.log({email}, "-> Your code:", {num})
 
-            navigate("/seconauth-password", { state: { num: num } });
+            await API.post("/users/set-mail-code", null, {
+                params: { mail_code: num }
+            });
+
+            navigate("/seconauth-password");
+
+        } catch (error) {
+            console.error("Error setting mail code:", error);
+        }
            
         }
     };

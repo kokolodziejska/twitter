@@ -1,6 +1,6 @@
 import blueImage from "../../assets/blue.jpg";
 import React, { useState, useEffect } from "react";
-import { useLocation,Link, useNavigate } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import "../../style/Main.css";
 import API from "../configurations/api";
 
@@ -8,7 +8,7 @@ function SeconAuth() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const usernameFromState = location.state?.userName || "";
+
     const [totpCode, setTotpCode] = useState("");
     const [error, setError] = useState("");
     const [qrCodeUrl, setQrCodeUrl] = useState(null);
@@ -16,34 +16,44 @@ function SeconAuth() {
     useEffect(() => {
         const fetchQrCode = async () => {
             try {
-                
-                const response = await API.post("/login/enable-totp", {
-                  
-                    responseType: 'blob'  
+                const response = await API.post("/login/enable-totp", null, {
+                    responseType: "blob" 
                 });
+    
                 console.log("QR Code response:", response);
-
+                console.log("typeof response.data:", typeof response.data);  
+                console.log("Content-Type:", response.headers["content-type"]);
+    
+                if (response.headers["content-type"] !== "image/png") {
+                    throw new Error("Invalid response type. Expected image/png.");
+                }
+    
                 const qrCodeUrl = URL.createObjectURL(response.data);
                 setQrCodeUrl(qrCodeUrl);
             } catch (err) {
                 console.error("Error generating QR code:", err);
             }
         };
-
-        if (usernameFromState && !qrCodeUrl) {
-            fetchQrCode();
-        }
-    }, [usernameFromState]);
+    
+        fetchQrCode();
+    }, []);
 
     const handleVerifyTotp = async () => {
         try {
-            
+
+            const cleanedTotpCode = totpCode.replace(/[\s\t]/g, "");
+
+            if (cleanedTotpCode.length !== 6) {
+                setError("TOTP code must be exactly 6 digits.");
+                return;
+            }
+
             const response = await API.post("/login/verify-totp", null, {
                 params: {
-                    code: parseInt(totpCode)
-            }});
+                    code: cleanedTotpCode
+                }
+            });
 
-            const { accessToken } = response.data;
             navigate("/Buzzly");
         } catch (err) {
             setError("Invalid TOTP code. Please try again.");
@@ -69,7 +79,7 @@ function SeconAuth() {
                     <div className="form-login">
                         <label htmlFor="totpCode">Enter your TOTP code:</label>
                         <input
-                            type="number"
+                            type="text"
                             id="totpCode"
                             value={totpCode}
                             onChange={(e) => setTotpCode(e.target.value)}

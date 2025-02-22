@@ -11,8 +11,20 @@ from cryptography.hazmat.primitives import serialization
 from sqlalchemy import select
 from models import User
 from pydantic import BaseModel
+from sqlalchemy import select
+import bleach
+import os
+from cryptography.hazmat.primitives import serialization
 
 
+ENCRYPTION_PASSWORD = os.getenv("RSA_ENCRYPTION_PASSWORD", "default_password").encode()
+
+
+ALLOWED_TAGS = ["b", "i", "u", "em", "strong", "a", "span"]
+ALLOWED_ATTRIBUTES = {
+    "a": ["href", "title"],
+    "span": ["style"]
+}
 
 async def get_private_key_for_user(user_id: int, db: AsyncSession) -> str:
     result = await db.execute(select(User.privKey).where(User.userId == user_id))
@@ -26,7 +38,7 @@ def generate_signature(private_key: str, message: str) -> str:
     try:
         private_key_obj = serialization.load_pem_private_key(
             private_key.encode(),
-            password=b"DawnoDawnotemuWOdleglejGalaktyce"  
+            password=ENCRYPTION_PASSWORD 
         )
         signature = private_key_obj.sign(
             message.encode(),
@@ -69,7 +81,6 @@ async def create_message(
     db: AsyncSession = Depends(get_db)
 ):
     try:
-        
         session_id = request.cookies.get("sessionId")
 
         if not session_id:
@@ -80,18 +91,21 @@ async def create_message(
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+
         
+        sanitized_message = bleach.clean(message_data.message, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+
         # Obsługa podpisu
         signature = None
         if message_data.doSign:
             private_key = await get_private_key_for_user(user.userId, db)
-            signature = generate_signature(private_key, request.message)
+            signature = generate_signature(private_key, sanitized_message)  
 
         # Tworzenie nowej wiadomości
         new_message = Message(
             userId=user.userId,
             userName=user.userName,
-            message=message_data.message,
+            message=sanitized_message,
             image=message_data.image if message_data.image else None,
             date=datetime.utcnow(),
             signature=signature
@@ -106,13 +120,7 @@ async def create_message(
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 
-from sqlalchemy import select, desc
-from sqlalchemy.orm import joinedload
-
-
-from sqlalchemy.orm import aliased
-
-@router.get("/", response_model=list[MessageResponse])
+@router.get("/messages", response_model=list[MessageResponse])
 async def get_all_messages(db: AsyncSession = Depends(get_db)):
     try:
        
