@@ -54,10 +54,6 @@ function App() {
                     </Routes>
                 </div>
             </Router>
-            <div>
-                <h5>Message from Backend:</h5>
-                <p>{message}</p>
-            </div>
             
         </div>
     );
